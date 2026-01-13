@@ -1,0 +1,64 @@
+:root {
+  --theme-primary: #2563eb;
+  --theme-primary-strong: #1d4ed8;
+  --theme-primary-soft: #e0ecff;
+  --theme-primary-border: #bfdbfe;
+  --theme-surface: #f8fbff;
+  --theme-bg: #f1f5f9;
+  --theme-gradient: linear-gradient(135deg, #e0ecff, #ffffff);
+}
+body {
+  background: var(--theme-gradient);
+}
+.nav-item {
+  color: #475569;
+}
+.nav-item.nav-active {
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+}
+.theme-pill {
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+  border-color: var(--theme-primary-border);
+}
+.theme-primary-btn {
+  background: var(--theme-primary);
+  color: #fff;
+  border-color: var(--theme-primary);
+}
+.theme-outline-btn {
+  border-color: var(--theme-primary);
+  color: var(--theme-primary);
+}
+.theme-card-accent {
+  border-color: var(--theme-primary-border);
+}
+.theme-surface-card {
+  background: #fff;
+  border: 1px solid var(--theme-primary-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+.theme-chip {
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-border);
+}
+.theme-soft {
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+}
+.theme-hero {
+  background: linear-gradient(135deg, var(--theme-primary-soft), #ffffff);
+  border: 1px solid var(--theme-primary-border);
+}
+.text-theme-primary-strong {
+  color: var(--theme-primary-strong);
+}
+.chart-segment {
+  transition: all 0.3s ease;
+}
+.chart-segment:hover {
+  stroke-width: 14;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.1));
+}

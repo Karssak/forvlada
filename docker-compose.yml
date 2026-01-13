@@ -1,0 +1,20 @@
+services:
+  lumora:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lumora-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - lumora-network
+
+networks:
+  lumora-network:
+    driver: bridge

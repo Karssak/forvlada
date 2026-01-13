@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumora</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .faq-item .faq-answer {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.3s ease-out;
+      }
+
+      .faq-item.open .faq-answer {
+        grid-template-rows: 1fr;
+      }
+
+      .faq-item .faq-answer-content {
+        overflow: hidden;
+      }
+
+      .faq-item .chevron-icon {
+        transition: transform 0.3s ease;
+      }
+
+      .faq-item.open .chevron-icon {
+        transform: rotate(180deg);
+      }
+
+      .faq-item:hover {
+        border-color: inherit !important;
+        box-shadow: none !important;
+      }
+
+      .faq-item > button:hover {
+        background-color: transparent !important;
+      }
+
+      @media (max-width: 1023px) {
+        #nav-container,
+        #content-container,
+        #footer-container {
+          display: none !important;
+        }
+
+        body::before {
+          content: "This site is desktop-only. Please open on a larger screen.";
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          width: 100%;
+          padding: 1rem;
+          box-sizing: border-box;
+          font-family:
+            system-ui,
+            -apple-system,
+            Segoe UI,
+            Roboto,
+            "Helvetica Neue",
+            Arial;
+          font-size: 1rem;
+          color: #0f172a;
+          background: #ffffff;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-white text-slate-900 overflow-x-hidden">
+    <div id="nav-container"></div>
+
+    <div id="content-container"></div>
+
+    <div id="footer-container"></div>
+
+    <script type="module" src="/script.js"></script>
+  </body>
+</html>

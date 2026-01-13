@@ -1,0 +1,58 @@
+<div
+  id="section-budgets"
+  data-section
+  class="theme-surface-card p-6 rounded-2xl h-full"
+>
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+      <i data-lucide="credit-card" class="w-5 h-5 text-emerald-500"></i>Monthly
+      Budget
+    </h3>
+    <button
+      onclick="
+        document.getElementById('addBudgetModal').classList.remove('hidden')
+      "
+      class="p-2 bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] rounded-lg hover:bg-opacity-80 transition-colors"
+    >
+      <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+  </div>
+  <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3" id="budgetsSummary">
+    <div
+      class="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center gap-3"
+    >
+      <i data-lucide="layers" class="w-5 h-5 text-slate-500"></i>
+      <div>
+        <p class="text-xs text-slate-500">Total Limit</p>
+        <p class="text-lg font-bold text-slate-900" id="budgetTotalLimit">
+          $0.00
+        </p>
+      </div>
+    </div>
+    <div
+      class="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center gap-3"
+    >
+      <i data-lucide="trending-down" class="w-5 h-5 text-slate-500"></i>
+      <div>
+        <p class="text-xs text-slate-500">Spent</p>
+        <p class="text-lg font-bold text-slate-900" id="budgetTotalSpent">
+          $0.00
+        </p>
+      </div>
+    </div>
+    <div
+      class="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center gap-3"
+    >
+      <i data-lucide="wallet" class="w-5 h-5 text-slate-500"></i>
+      <div>
+        <p class="text-xs text-slate-500">Remaining</p>
+        <p class="text-lg font-bold text-slate-900" id="budgetRemaining">
+          $0.00
+        </p>
+      </div>
+    </div>
+  </div>
+  <div id="budgetsList" class="space-y-4">
+    <p class="text-center text-slate-400 py-4">No budgets set yet.</p>
+  </div>
+</div>
