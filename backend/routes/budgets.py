@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from backend.database import get_db, query_db
 from backend.utils import login_required, get_user_family_id
 from backend.socket_events import emit_activity, emit_family_event
@@ -14,6 +14,10 @@ def handle_budgets():
         return jsonify({"error": "No family found"}), 404
 
     if request.method == "POST":
+        user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
+        if user and user["role"] == "child":
+             return jsonify({"error": "Children cannot create budgets"}), 403
+
         data = request.json or {}
         category = data.get("category")
         amount = data.get("amount")

@@ -1,8 +1,17 @@
-import { apiCall, setupForm, validateAmount, validateString } from "../core.js";
+import { apiCall, setupForm, validateAmount, validateString, state } from "../core.js";
 import { loadTransactions } from "./transactions.js";
 
 export async function loadBudgets() {
   try {
+    const addBtn = document.getElementById("addBudgetBtn");
+    if (addBtn) {
+        if (state.currentUser?.role === 'child') {
+            addBtn.classList.add('hidden');
+        } else {
+            addBtn.classList.remove('hidden');
+        }
+    }
+
     const budgets = await apiCall(`/api/budgets?t=${Date.now()}`);
     const list = document.getElementById("budgetsList");
     const totalLimitEl = document.getElementById("budgetTotalLimit");
@@ -41,14 +50,17 @@ export async function loadBudgets() {
       .map((b) => {
         const percent = Math.min(100, (b.spent / b.limit) * 100);
         const remaining = Math.max(0, b.limit - b.spent);
+        const barColor = b.spent > b.limit ? "bg-red-500" : "bg-[var(--theme-primary)]";
+        const categoryLabel = b.category.charAt(0).toUpperCase() + b.category.slice(1);
+        
         return `
           <div class="p-4 border border-slate-100 rounded-xl theme-card-accent bg-white">
             <div class="flex justify-between items-center mb-2">
-              <p class="font-bold text-slate-900">${b.category}</p>
+              <p class="font-bold text-slate-900">${categoryLabel}</p>
               <span class="text-sm text-slate-500">$${Number(b.limit).toFixed(2)} / ${b.period}</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div class="bg-[var(--theme-primary)] h-2.5 rounded-full" style="width: ${percent}%;"></div>
+              <div class="${barColor} h-2.5 rounded-full" style="width: ${percent}%;"></div>
             </div>
             <div class="flex justify-between text-xs text-slate-500 mt-2">
               <span>Spent: $${Number(b.spent).toFixed(2)}</span>

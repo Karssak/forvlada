@@ -1,7 +1,16 @@
-import { apiCall, setupForm, validateAmount, validateString } from "../core.js";
+import { apiCall, setupForm, validateAmount, validateString, state } from "../core.js";
 
 export async function loadGoals() {
   try {
+    const addBtn = document.getElementById("addGoalBtn");
+    if (addBtn) {
+        if (state.currentUser?.role === 'child') {
+            addBtn.classList.add('hidden');
+        } else {
+            addBtn.classList.remove('hidden');
+        }
+    }
+
     const goals = await apiCall(`/api/goals?t=${Date.now()}`);
     const list = document.getElementById("goalsList");
     if (!list) return;

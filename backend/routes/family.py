@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, session
+from werkzeug.security import check_password_hash
 from backend.database import query_db, execute_db, get_db
 from backend.utils import login_required, get_user_family_id, generate_invite_code
 from backend.socket_events import emit_family_event, emit_activity
@@ -189,3 +190,31 @@ def assign_role():
     emit_family_event(family_id, "update_roles")
     emit_activity(family_id, "Role updated", f"{target_label} is now {new_role}", category="roles")
     return jsonify({"message": "Role updated"}), 200
+
+
+@family_bp.route("/api/family_delete", methods=["DELETE"])
+@login_required
+def delete_family_route():
+    family_id = get_user_family_id()
+    if not family_id:
+        return jsonify({"error": "No family found"}), 404
+
+    requester = query_db("SELECT role, password FROM users WHERE id = ?", (session["user_id"],), one=True)
+    if not requester or requester["role"] != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.json or {}
+    password = data.get("password")
+    if not password:
+         return jsonify({"error": "Password required"}), 400
+    
+    if not check_password_hash(requester["password"], password):
+         return jsonify({"error": "Invalid password"}), 403
+
+    # Delete family
+    with get_db() as conn:
+        conn.execute("UPDATE users SET family_id = NULL, role = 'child' WHERE family_id = ?", (family_id,))
+        conn.execute("DELETE FROM families WHERE id = ?", (family_id,))
+        conn.commit()
+
+    return jsonify({"message": "Family deleted"}), 200

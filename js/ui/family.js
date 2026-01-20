@@ -1,4 +1,4 @@
-import { fetchFamilySnapshot, apiCall, state } from "../core.js";
+import { fetchFamilySnapshot, apiCall, state, showToast } from "../core.js";
 
 export async function loadFamilyMembers() {
   try {
@@ -6,9 +6,45 @@ export async function loadFamilyMembers() {
     if (!data) return;
 
     const inviteEl = document.getElementById("familyInviteCode");
+    const copyBtn = document.getElementById("copyInviteBtn");
+
     if (inviteEl && data.invite_code) inviteEl.textContent = data.invite_code;
+    
+    if (copyBtn) {
+      copyBtn.onclick = () => {
+        if (data.invite_code) {
+           navigator.clipboard.writeText(data.invite_code);
+           const icon = copyBtn.querySelector("i");
+           if(icon) {
+             icon.setAttribute("data-lucide", "check");
+             copyBtn.classList.add("text-green-500");
+             if (typeof lucide !== "undefined") lucide.createIcons();
+             setTimeout(() => {
+               icon.setAttribute("data-lucide", "copy");
+               copyBtn.classList.remove("text-green-500");
+               if (typeof lucide !== "undefined") lucide.createIcons();
+             }, 2000);
+           }
+        }
+      };
+    }
+
     const list = document.getElementById("familyMembersList");
     if (!list) return;
+
+    // Handle Admin delete family button
+    const dangerZone = document.getElementById("familySettingsArea");
+    if (dangerZone) {
+      if (state.currentUser?.role === 'admin') {
+        dangerZone.classList.remove('hidden');
+        const delBtn = document.getElementById("deleteFamilyBtn");
+        if (delBtn) delBtn.onclick = () => openDeleteFamilyModal();
+        // ensure modal handlers are attached when admin view is active
+        setupDeleteFamilyHandlers();
+      } else {
+        dangerZone.classList.add('hidden');
+      }
+    }
 
     const members = data.members || [];
     if (!members.length) {
@@ -60,8 +96,9 @@ async function removeFamilyMember(memberId) {
     await apiCall(`/api/family/members/${memberId}`, "DELETE");
     loadFamilyMembers();
     loadRoles();
+    showToast("Member removed successfully", "success");
   } catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
   }
 }
 
@@ -70,6 +107,8 @@ export async function loadRoles() {
     const data = await fetchFamilySnapshot();
     const list = document.getElementById("memberRolesList");
     if (!data || !list) return;
+
+    const isAdmin = state.currentUser?.role === "admin";
 
     list.innerHTML = (data.members || [])
       .map(
@@ -80,7 +119,7 @@ export async function loadRoles() {
           <p class="text-xs text-slate-500">${m.email}</p>
         </div>
         <div class="relative">
-          <select class="appearance-none px-3 py-2 pr-10 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" data-role-user-id="${m.id}">
+          <select ${!isAdmin ? "disabled" : ""} class="appearance-none px-3 py-2 pr-10 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400" data-role-user-id="${m.id}">
             ${["admin", "parent", "child"].map((r) => `<option value="${r}" ${m.role === r ? "selected" : ""}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join("")}
           </select>
           <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -104,7 +143,52 @@ async function assignRole(userId, role) {
     await apiCall("/api/roles/assign", "POST", { userId, role });
     loadRoles();
     loadFamilyMembers();
+    showToast("Role updated successfully", "success");
   } catch (err) {
-    alert(err.message);
+    showToast(err.message, "error");
+  }
+}
+
+async function deleteFamily() {
+  // kept for backward compatibility; prefer using modal
+  openDeleteFamilyModal();
+}
+
+function openDeleteFamilyModal() {
+  const modal = document.getElementById('deleteFamilyModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  const pwd = document.getElementById('deleteFamilyPasswordInput');
+  if (pwd) pwd.value = '';
+}
+
+function setupDeleteFamilyHandlers() {
+  const modal = document.getElementById('deleteFamilyModal');
+  if (!modal) return;
+  const confirmBtn = document.getElementById('confirmDeleteFamilyBtn');
+  const closeBtns = modal.querySelectorAll('[onclick]');
+
+  // attach close behavior to any inline close buttons so modal hides
+  closeBtns.forEach((b) => {
+    // leave existing inline onclicks
+  });
+
+  if (confirmBtn) {
+    // use onclick to avoid duplicate event handlers
+    confirmBtn.onclick = async () => {
+      const pwdInput = document.getElementById('deleteFamilyPasswordInput');
+      const password = pwdInput?.value;
+      if (!password) {
+        showToast("Please enter your password", "error");
+        return;
+      }
+      try {
+        await apiCall('/api/family_delete', 'DELETE', { password });
+        showToast("Family deleted. Redirecting...", "success");
+        setTimeout(() => (window.location.href = '/'), 1200);
+      } catch (err) {
+        showToast(err.message || 'Failed to delete family', 'error');
+      }
+    };
   }
 }

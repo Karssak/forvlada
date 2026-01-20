@@ -202,7 +202,7 @@ export function renderRecurringBills(transactions = []) {
 
   if (!recurring.length) {
     recurringList.innerHTML =
-      '<p class="text-center text-slate-400 py-6">No recurring bills yet.</p>';
+      '<p class="text-center text-slate-400 py-6">No recurring transactions yet.</p>';
     return;
   }
 

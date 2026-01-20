@@ -1,6 +1,24 @@
 import { apiCall, navigate, setupForm, validateEmail, validateString } from "../core.js";
 
+function setupPasswordToggle() {
+  document.querySelectorAll('.toggle-password').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.parentElement.querySelector('input');
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        if(icon) icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        if(icon) icon.setAttribute('data-lucide', 'eye');
+      }
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+  });
+}
+
 export function initLoginForm() {
+  setupPasswordToggle();
   setupForm("loginForm", async (formData) => {
     const email = formData.get("email")?.trim();
     const password = formData.get("password");
@@ -18,6 +36,7 @@ export function initLoginForm() {
 }
 
 export function initRegisterForm() {
+  setupPasswordToggle();
   setupForm("registerForm", async (formData) => {
     const data = Object.fromEntries(formData);
     

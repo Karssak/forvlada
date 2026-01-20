@@ -8,4 +8,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.addEventListener("popstate", router);
   router();
+  
+  // Fix nav links
+  document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      if (window.location.pathname !== '/') {
+        e.preventDefault();
+        window.location.href = '/' + this.getAttribute('href');
+      }
+    });
+  });
 });
