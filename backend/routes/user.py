@@ -25,6 +25,7 @@ def me():
         if user:
                 return jsonify(
                         {
+                                "id": session["user_id"],
                                 "firstName": user["first_name"],
                                 "lastName": user["last_name"],
                                 "email": user["email"],

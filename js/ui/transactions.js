@@ -1,5 +1,5 @@
 import { apiCall, state, setupForm, validateAmount, validateString } from "../core.js";
-import { renderSpendingChart } from "./chart.js";
+import { renderSpendingChart, renderRoleSpendingChart, renderChildSpendingStats } from "./chart.js";
 
 const TRANSACTION_PAGE_SIZE = 5;
 let transactionPage = 1;
@@ -14,6 +14,8 @@ export async function loadTransactions() {
     renderTransactions();
     renderRecurringBills(state.transactionsCache);
     renderSpendingChart(state.transactionsCache);
+    renderRoleSpendingChart(state.transactionsCache);
+    renderChildSpendingStats(state.transactionsCache);
 
     if (typeof lucide !== "undefined") lucide.createIcons();
   } catch {}
@@ -119,14 +121,26 @@ export function renderTransactions() {
               ${recurringBadge ? `<div class="mt-1">${recurringBadge}</div>` : ""}
             </div>
           </div>
-          <div class="text-right">
-            <div class="font-bold ${colorClass}">${sign}$${Number(t.amount).toFixed(2)}</div>
-            <span class="inline-flex mt-1 px-2 py-0.5 text-xs rounded-full ${badgeClass}">${(t.category || "General").charAt(0).toUpperCase() + (t.category || "General").slice(1)}</span>
+          <div class="flex items-center gap-4">
+            <div class="text-right">
+              <div class="font-bold ${colorClass}">${sign}$${Number(t.amount).toFixed(2)}</div>
+              <span class="inline-flex mt-1 px-2 py-0.5 text-xs rounded-full ${badgeClass}">${(t.category || "General").charAt(0).toUpperCase() + (t.category || "General").slice(1)}</span>
+            </div>
+            <button class="p-2 text-slate-400 hover:text-red-500 transition-colors" data-delete-transaction="${t.id}" title="Delete Transaction">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
           </div>
         </div>
       `;
     })
     .join("");
+
+  list.querySelectorAll("button[data-delete-transaction]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteTransaction(btn.getAttribute("data-delete-transaction"));
+    });
+  });
 
   
   if (paginationContainer) {
@@ -296,4 +310,14 @@ export function initTransactionForm() {
     if (recurringFields) recurringFields.classList.add("hidden");
     loadTransactions();
   });
+}
+
+async function deleteTransaction(id) {
+  if (!confirm("Are you sure you want to delete this transaction?")) return;
+  try {
+    await apiCall(`/api/transactions/${id}`, "DELETE");
+    loadTransactions();
+  } catch (err) {
+    console.error("Failed to delete transaction:", err);
+  }
 }

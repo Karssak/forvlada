@@ -167,8 +167,7 @@ def assign_role():
     if new_role not in ["admin", "parent", "child"]:
         return jsonify({"error": "Invalid role"}), 400
 
-    
-    if target_user_id == session["user_id"] and new_role != "admin":
+    if str(target_user_id) == str(session["user_id"]) and new_role != "admin":
         return jsonify({"error": "Cannot remove your own admin role"}), 400
 
     requester = query_db("SELECT family_id, role FROM users WHERE id = ?", (session["user_id"],), one=True)

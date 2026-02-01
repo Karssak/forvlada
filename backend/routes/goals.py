@@ -119,3 +119,32 @@ def adjust_goal(goal_id):
         )
         return jsonify({"message": "Goal updated", "goalId": goal_id, "currentAmount": new_amount}), 200
 
+
+@goals_bp.route("/api/goals/<int:goal_id>", methods=["DELETE"])
+@login_required
+def delete_goal(goal_id):
+    family_id = get_user_family_id()
+    if not family_id:
+        return jsonify({"error": "No family found"}), 404
+
+    # Check permission
+    user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
+    if user and user["role"] == "child":
+        return jsonify({"error": "Children cannot delete goals"}), 403
+
+    # Check if goal exists
+    goal = query_db("SELECT name FROM goals WHERE id = ? AND family_id = ?", (goal_id, family_id), one=True)
+    if not goal:
+        return jsonify({"error": "Goal not found"}), 404
+
+    execute_db("DELETE FROM goals WHERE id = ?", (goal_id,))
+    
+    emit_family_event(family_id, "update_goals")
+    emit_activity(
+        family_id,
+        "Goal deleted",
+        f"Goal '{goal['name']}' removed",
+        category="goals"
+    )
+    return jsonify({"message": "Goal deleted"}), 200
+

@@ -109,22 +109,26 @@ export async function loadRoles() {
     if (!data || !list) return;
 
     const isAdmin = state.currentUser?.role === "admin";
+    const currentUserId = state.currentUser?.id;
 
     list.innerHTML = (data.members || [])
       .map(
-        (m) => `
+        (m) => {
+           const isSelf = m.id == currentUserId;
+           return `
       <div class="flex items-center justify-between p-3 border border-slate-100 rounded-lg">
         <div>
           <p class="font-bold text-slate-900">${m.first_name || ""} ${m.last_name || ""}</p>
           <p class="text-xs text-slate-500">${m.email}</p>
         </div>
         <div class="relative">
-          <select ${!isAdmin ? "disabled" : ""} class="appearance-none px-3 py-2 pr-10 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400" data-role-user-id="${m.id}">
+          <select ${!isAdmin || (isSelf && m.role === 'admin') ? "disabled" : ""} class="appearance-none px-3 py-2 pr-10 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400" data-role-user-id="${m.id}">
             ${["admin", "parent", "child"].map((r) => `<option value="${r}" ${m.role === r ? "selected" : ""}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join("")}
           </select>
           <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
         </div>
-      </div>`,
+      </div>`
+        },
       )
       .join("");
 
@@ -139,6 +143,11 @@ export async function loadRoles() {
 }
 
 async function assignRole(userId, role) {
+  if (state.currentUser?.role === 'admin' && userId == state.currentUser?.id && role !== 'admin') {
+      showToast("Cannot remove your own admin role", "error");
+      loadRoles();
+      return;
+  }
   try {
     await apiCall("/api/roles/assign", "POST", { userId, role });
     loadRoles();

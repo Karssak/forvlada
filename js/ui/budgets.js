@@ -54,8 +54,11 @@ export async function loadBudgets() {
         const categoryLabel = b.category.charAt(0).toUpperCase() + b.category.slice(1);
         
         return `
-          <div class="p-4 border border-slate-100 rounded-xl theme-card-accent bg-white">
-            <div class="flex justify-between items-center mb-2">
+          <div class="p-4 border border-slate-100 rounded-xl theme-card-accent bg-white relative">
+            <button class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors" data-delete-budget="${b.id}" title="Delete Budget">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+            <div class="flex justify-between items-center mb-2 pr-6">
               <p class="font-bold text-slate-900">${categoryLabel}</p>
               <span class="text-sm text-slate-500">$${Number(b.limit).toFixed(2)} / ${b.period}</span>
             </div>
@@ -70,7 +73,24 @@ export async function loadBudgets() {
         `;
       })
       .join("");
+
+    list.querySelectorAll("[data-delete-budget]").forEach((btn) => {
+         btn.addEventListener("click", (e) => {
+             e.stopPropagation();
+             deleteBudget(btn.getAttribute("data-delete-budget"));
+         });
+    });
   } catch {}
+}
+
+async function deleteBudget(id) {
+    if (!confirm("are you sure you want to delete this budget?")) return;
+    try {
+        await apiCall(`/api/budgets/${id}`, "DELETE");
+        loadBudgets();
+    } catch(err) {
+        console.error("Failed to delete budget:", err);
+    }
 }
 
 export function initBudgetForm() {

@@ -26,8 +26,11 @@ export async function loadGoals() {
           ? Math.min(100, (g.current_amount / target) * 100)
           : 0;
         return `
-          <div class="theme-surface-card p-4 rounded-2xl flex flex-col h-full">
-            <div class="flex items-start justify-between mb-3">
+          <div class="theme-surface-card p-4 rounded-2xl flex flex-col h-full bg-white relative">
+            <button class="absolute top-2 right-2 p-2 text-slate-300 hover:text-red-500 transition-colors" data-delete-goal="${g.id}" title="Delete Goal">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+            <div class="flex items-start justify-between mb-3 pr-8">
               <div class="flex items-center gap-3">
                 <i data-lucide="flag" class="w-5 h-5 text-indigo-500"></i>
                 <div>
@@ -58,6 +61,13 @@ export async function loadGoals() {
         `;
       })
       .join("");
+
+    list.querySelectorAll("[data-delete-goal]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteGoal(btn.getAttribute("data-delete-goal"));
+        });
+    });
 
     list.querySelectorAll("[data-goal-adjust]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -171,4 +181,14 @@ export function initGoalAdjustForm() {
     document.getElementById("adjustGoalModal")?.classList.add("hidden");
     loadGoals();
   });
+}
+
+async function deleteGoal(id) {
+    if (!confirm("Are you sure you want to delete this goal?")) return;
+    try {
+        await apiCall(`/api/goals/${id}`, "DELETE");
+        loadGoals();
+    } catch (err) {
+        console.error("Failed to delete goal:", err);
+    }
 }

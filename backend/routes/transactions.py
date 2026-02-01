@@ -79,7 +79,7 @@ def handle_transactions():
 
         transactions = query_db(
                 """
-                SELECT t.*, u.first_name
+                SELECT t.*, u.first_name, u.role
                 FROM transactions t
                 JOIN users u ON t.user_id = u.id
                 WHERE t.family_id = ?
@@ -88,3 +88,26 @@ def handle_transactions():
                 (family_id,),
         )
         return jsonify([dict(row) for row in transactions])
+
+
+@transactions_bp.route("/api/transactions/<int:transaction_id>", methods=["DELETE"])
+@login_required
+def delete_transaction(transaction_id):
+    family_id = get_user_family_id()
+    if not family_id:
+        return jsonify({"error": "No family found"}), 404
+
+    # Check if transaction exists and belongs to family
+    tx = query_db(
+        "SELECT * FROM transactions WHERE id = ? AND family_id = ?",
+        (transaction_id, family_id),
+        one=True
+    )
+    if not tx:
+        return jsonify({"error": "Transaction not found"}), 404
+        
+    execute_db("DELETE FROM transactions WHERE id = ?", (transaction_id,))
+    
+    emit_family_event(family_id, "update_transactions")
+    emit_family_event(family_id, "update_budgets")
+    return jsonify({"message": "Transaction deleted"}), 200

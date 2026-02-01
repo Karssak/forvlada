@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from backend.database import get_db, query_db
+from backend.database import get_db, query_db, execute_db
 from backend.utils import login_required, get_user_family_id
 from backend.socket_events import emit_activity, emit_family_event
 
@@ -80,3 +80,30 @@ def handle_budgets():
 
     result = [dict(row) for row in budgets]
     return jsonify(result)
+
+
+@budgets_bp.route("/api/budgets/<int:budget_id>", methods=["DELETE"])
+@login_required
+def delete_budget(budget_id):
+    family_id = get_user_family_id()
+    if not family_id:
+        return jsonify({"error": "No family found"}), 404
+
+    user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
+    if user and user["role"] == "child":
+        return jsonify({"error": "Children cannot delete budgets"}), 403
+
+    budget = query_db("SELECT category FROM budgets WHERE id = ? AND family_id = ?", (budget_id, family_id), one=True)
+    if not budget:
+        return jsonify({"error": "Budget not found"}), 404
+
+    execute_db("DELETE FROM budgets WHERE id = ?", (budget_id,))
+    
+    emit_family_event(family_id, "update_budgets")
+    emit_activity(
+        family_id,
+        "Budget deleted",
+        f"Budget for {budget['category']} removed",
+        category="budgets"
+    )
+    return jsonify({"message": "Budget deleted"}), 200
