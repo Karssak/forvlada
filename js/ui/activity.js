@@ -61,8 +61,20 @@ export function renderLiveEvents() {
         hour: "2-digit",
         minute: "2-digit",
       });
+      
+      // Format user info: Name (Role)
+      let userInfo = "";
+      if (evt.user_name) {
+        userInfo = evt.user_name;
+        if (evt.user_role) {
+          const roleLabel = evt.user_role.charAt(0).toUpperCase() + evt.user_role.slice(1);
+          userInfo += ` (${roleLabel})`;
+        }
+        userInfo = `${userInfo}: `;
+      }
+      
       const detail = evt.detail
-        ? `<p class="text-xs text-slate-500">${evt.detail}</p>`
+        ? `<p class="text-xs text-slate-500">${userInfo}${evt.detail}</p>`
         : "";
       return `
         <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex items-start justify-between gap-3">

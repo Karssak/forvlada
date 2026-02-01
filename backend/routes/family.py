@@ -86,7 +86,12 @@ def join_family():
         conn.commit()
 
     emit_family_event(fam["id"], "update_members")
-    emit_activity(fam["id"], "Member joined", f"{session.get('email','Member')} joined", category="members")
+    
+    user_info = query_db("SELECT first_name, last_name, role FROM users WHERE id = ?", (session["user_id"],), one=True)
+    user_name = f"{user_info['first_name'] or ''} {user_info['last_name'] or ''}".strip() if user_info else "Member"
+    user_role = user_info["role"] if user_info else ""
+    
+    emit_activity(fam["id"], "Member joined", f"Joined the family", category="members", user_name=user_name, user_role=user_role)
     return jsonify({"message": "Joined family"}), 200
 
 

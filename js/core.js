@@ -7,6 +7,8 @@ export const state = {
   activityPage: 1,
   socketReady: false,
   spendingChartInstance: null,
+  roleChartInstance: null,
+  incomeChartInstance: null,
 };
 
 export const CATEGORY_COLORS = [

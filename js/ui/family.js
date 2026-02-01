@@ -6,28 +6,7 @@ export async function loadFamilyMembers() {
     if (!data) return;
 
     const inviteEl = document.getElementById("familyInviteCode");
-    const copyBtn = document.getElementById("copyInviteBtn");
-
     if (inviteEl && data.invite_code) inviteEl.textContent = data.invite_code;
-    
-    if (copyBtn) {
-      copyBtn.onclick = () => {
-        if (data.invite_code) {
-           navigator.clipboard.writeText(data.invite_code);
-           const icon = copyBtn.querySelector("i");
-           if(icon) {
-             icon.setAttribute("data-lucide", "check");
-             copyBtn.classList.add("text-green-500");
-             if (typeof lucide !== "undefined") lucide.createIcons();
-             setTimeout(() => {
-               icon.setAttribute("data-lucide", "copy");
-               copyBtn.classList.remove("text-green-500");
-               if (typeof lucide !== "undefined") lucide.createIcons();
-             }, 2000);
-           }
-        }
-      };
-    }
 
     const list = document.getElementById("familyMembersList");
     if (!list) return;

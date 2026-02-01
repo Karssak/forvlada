@@ -288,3 +288,108 @@ export function renderChildSpendingStats(transactions = []) {
       </div>
   `).join('')}`;
 }
+
+export function renderIncomeChart(transactions = []) {
+  const ctx = document.getElementById("incomeChart");
+  const legend = document.getElementById("incomeLegend");
+  const totalDisplay = document.getElementById("incomeChartTotal");
+  if (!ctx || !legend) return;
+
+  const income = transactions.filter((t) => t.type === "income");
+  const totals = income.reduce((acc, tx) => {
+    const key = tx.category || "Other";
+    acc[key] = (acc[key] || 0) + Math.abs(Number(tx.amount) || 0);
+    return acc;
+  }, {});
+
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const totalAmount = entries.reduce((sum, [, value]) => sum + value, 0);
+
+  if (totalDisplay) {
+    totalDisplay.textContent = `$${totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  }
+
+  if (!entries.length || totalAmount === 0) {
+    if (state.incomeChartInstance) {
+      state.incomeChartInstance.destroy();
+      state.incomeChartInstance = null;
+    }
+    legend.innerHTML =
+      '<p class="text-slate-400 text-sm text-center py-4">No income data yet.</p>';
+    return;
+  }
+
+  const labels = entries.map(([cat]) => cat);
+  const capitalize = (s) =>
+    typeof s === "string" && s.length
+      ? s.charAt(0).toUpperCase() + s.slice(1)
+      : s;
+  const labelsCap = labels.map(capitalize);
+  const data = entries.map(([, val]) => val);
+
+  const incomeColors = ["#10b981", "#059669", "#34d399", "#6ee7b7", "#a7f3d0"];
+  const colors = entries.map((_, idx) => incomeColors[idx % incomeColors.length]);
+
+  if (state.incomeChartInstance) {
+    state.incomeChartInstance.destroy();
+  }
+
+  state.incomeChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: labelsCap,
+      datasets: [
+        {
+          data: data,
+          backgroundColor: colors,
+          borderWidth: 2,
+          borderColor: "#ffffff",
+          hoverOffset: 0,
+        },
+      ],
+    },
+    options: {
+      cutout: "75%",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: 10 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: "#1e293b",
+          padding: 10,
+          cornerRadius: 6,
+          callbacks: {
+            label: (context) => {
+              const val = context.raw;
+              const percent = ((val / totalAmount) * 100).toFixed(1);
+              return ` ${context.label}: $${val.toLocaleString()} (${percent}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  legend.innerHTML = entries
+    .map(([category, value], idx) => {
+      const percent = ((value / totalAmount) * 100).toFixed(1);
+      const color = incomeColors[idx % incomeColors.length];
+      const displayLabel = capitalize(category);
+      return `
+        <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+            <span class="font-medium text-slate-600">${displayLabel}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
+            <span class="text-[10px] text-slate-400 ml-1">${percent}%</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}

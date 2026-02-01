@@ -69,11 +69,18 @@ def handle_transactions():
 
                 emit_family_event(family_id, "update_transactions")
                 emit_family_event(family_id, "update_budgets")
+                
+                user_info = query_db("SELECT first_name, last_name, role FROM users WHERE id = ?", (session["user_id"],), one=True)
+                user_name = f"{user_info['first_name'] or ''} {user_info['last_name'] or ''}".strip() if user_info else "Member"
+                user_role = user_info["role"] if user_info else ""
+                
                 emit_activity(
                         family_id,
                         "Transaction added",
-                        f"{session.get('email','Member')} logged {tx_type} ${amount} · {description}",
+                        f"Logged {tx_type} ${amount} · {description}",
                         category="transactions",
+                        user_name=user_name,
+                        user_role=user_role
                 )
                 return jsonify({"message": "Transaction added"}), 201
 

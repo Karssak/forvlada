@@ -1,5 +1,5 @@
 import { apiCall, state, setupForm, validateAmount, validateString } from "../core.js";
-import { renderSpendingChart, renderRoleSpendingChart, renderChildSpendingStats } from "./chart.js";
+import { renderSpendingChart, renderRoleSpendingChart, renderChildSpendingStats, renderIncomeChart } from "./chart.js";
 
 const TRANSACTION_PAGE_SIZE = 5;
 let transactionPage = 1;
@@ -16,6 +16,7 @@ export async function loadTransactions() {
     renderSpendingChart(state.transactionsCache);
     renderRoleSpendingChart(state.transactionsCache);
     renderChildSpendingStats(state.transactionsCache);
+    renderIncomeChart(state.transactionsCache);
 
     if (typeof lucide !== "undefined") lucide.createIcons();
   } catch {}
@@ -109,6 +110,10 @@ export function renderTransactions() {
       const nextDue = t.next_due_date
         ? ` • Next: ${new Date(t.next_due_date).toLocaleDateString()}`
         : "";
+      const roleLabel = t.role ? t.role.charAt(0).toUpperCase() + t.role.slice(1) : "";
+      const userInfo = t.first_name || "";
+      const userWithRole = roleLabel ? `${userInfo} (${roleLabel})` : userInfo;
+      
       return `
         <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white hover:border-[var(--theme-primary-border)] transition">
           <div class="flex items-center gap-4">
@@ -117,7 +122,7 @@ export function renderTransactions() {
             </div>
             <div class="min-w-0">
               <p class="font-bold text-slate-900 truncate">${t.description}</p>
-              <p class="text-xs text-slate-500">${new Date(t.date).toLocaleDateString()} • ${t.first_name || ""}${nextDue}</p>
+              <p class="text-xs text-slate-500">${new Date(t.date).toLocaleDateString()} • ${userWithRole}${nextDue}</p>
               ${recurringBadge ? `<div class="mt-1">${recurringBadge}</div>` : ""}
             </div>
           </div>

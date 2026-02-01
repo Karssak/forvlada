@@ -16,12 +16,14 @@ def emit_family_event(family_id, event_name, data=None):
     socketio.emit(event_name, data, room=get_family_room(family_id))
 
 
-def emit_activity(family_id, title, detail="", category="info"):
+def emit_activity(family_id, title, detail="", category="info", user_name="", user_role=""):
     event = {
         "family_id": family_id,
         "title": title,
         "detail": detail,
         "category": category,
+        "user_name": user_name,
+        "user_role": user_role,
         "ts": int(time.time() * 1000),
     }
     buf = ACTIVITY_BUFFER.setdefault(family_id, [])

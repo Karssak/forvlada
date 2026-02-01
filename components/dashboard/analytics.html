@@ -5,6 +5,34 @@
   </h3>
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="theme-surface-card p-6 rounded-2xl">
+      <h4 class="font-bold text-slate-900 mb-4">Income by Category</h4>
+      <div class="flex flex-col lg:flex-row gap-8 items-center">
+        <div class="relative w-72 h-72">
+          <div
+            class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+            style="z-index: 1"
+          >
+            <span
+              class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+              >Total</span
+            >
+            <span
+              id="incomeChartTotal"
+              class="text-2xl font-bold text-emerald-600"
+              >$0</span
+            >
+          </div>
+          <canvas
+            id="incomeChart"
+            style="position: relative; z-index: 10"
+          ></canvas>
+        </div>
+        <div class="flex-1 w-full">
+          <div id="incomeLegend" class="space-y-2 text-sm"></div>
+        </div>
+      </div>
+    </div>
+    <div class="theme-surface-card p-6 rounded-2xl">
       <h4 class="font-bold text-slate-900 mb-4">Spending by Category</h4>
       <div class="flex flex-col lg:flex-row gap-8 items-center">
         <div class="relative w-72 h-72">
