@@ -50,20 +50,32 @@ export async function loadBudgets() {
       .map((b) => {
         const percent = Math.min(100, (b.spent / b.limit) * 100);
         const remaining = Math.max(0, b.limit - b.spent);
-        const barColor = b.spent > b.limit ? "bg-red-500" : "bg-[var(--theme-primary)]";
+        
+        const percentVal = (b.spent / b.limit) * 100;
+        let barColor = "#22c55e";
+        if (percentVal >= 100) barColor = "#dc2626";
+        else if (percentVal >= 80) barColor = "#ef4444";
+        else if (percentVal >= 60) barColor = "#eab308";
+        
+        const barStyle = `background-color: ${barColor};`;
+        
         const categoryLabel = b.category.charAt(0).toUpperCase() + b.category.slice(1);
         
-        return `
-          <div class="p-4 border border-slate-100 rounded-xl theme-card-accent bg-white relative">
-            <button class="absolute top-2 right-2 text-slate-300 hover:text-red-500 transition-colors" data-delete-budget="${b.id}" title="Delete Budget">
+        const isChild = state.currentUser?.role === 'child';
+        const deleteBtn = isChild ? '' : `
+            <button class="absolute top-4 right-2 text-slate-400 hover:text-red-500 transition-colors z-10 p-1 bg-white/80 rounded-full" data-delete-budget="${b.id}" title="Delete Budget">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
+            </button>`;
+
+        return `
+          <div class="p-4 border border-slate-100 rounded-xl theme-card-accent bg-white relative group">
+            ${deleteBtn}
             <div class="flex justify-between items-center mb-2 pr-6">
               <p class="font-bold text-slate-900">${categoryLabel}</p>
               <span class="text-sm text-slate-500">$${Number(b.limit).toFixed(2)} / ${b.period}</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div class="${barColor} h-2.5 rounded-full" style="width: ${percent}%;"></div>
+              <div class="h-2.5 rounded-full" style="width: ${percent}%; ${barStyle}"></div>
             </div>
             <div class="flex justify-between text-xs text-slate-500 mt-2">
               <span>Spent: $${Number(b.spent).toFixed(2)}</span>
@@ -80,6 +92,7 @@ export async function loadBudgets() {
              deleteBudget(btn.getAttribute("data-delete-budget"));
          });
     });
+    if (typeof lucide !== "undefined") lucide.createIcons();
   } catch {}
 }
 
@@ -98,12 +111,10 @@ export function initBudgetForm() {
     const category = formData.get("category");
     const amount = formData.get("amount");
     
-    // Validate category
     if (!validateString(category, 1, 100)) {
       throw new Error("Category must be 1-100 characters");
     }
     
-    // Validate amount
     if (!validateAmount(amount, 0, 999999999)) {
       throw new Error("Amount must be between 0 and 999,999,999");
     }

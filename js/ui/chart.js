@@ -42,9 +42,13 @@ export function renderSpendingChart(transactions = []) {
     getComputedStyle(document.documentElement)
       .getPropertyValue("--theme-primary")
       .trim() || CATEGORY_COLORS[0];
-  const colors = entries.map((_, idx) =>
-    idx === 0 ? themePrimary : CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
-  );
+  
+  const colors = entries.map(([name], idx) => {
+    const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (cat) return cat.color;
+    
+    return idx === 0 ? themePrimary : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+  });
 
   if (state.spendingChartInstance) {
     state.spendingChartInstance.destroy();
@@ -96,7 +100,16 @@ export function renderSpendingChart(transactions = []) {
   legend.innerHTML = entries
     .map(([category, value], idx) => {
       const percent = ((value / totalAmount) * 100).toFixed(1);
-      const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+      
+      let color;
+      const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === category.toLowerCase());
+      if (cat) {
+          color = cat.color;
+      } else {
+        const themePrimary = getComputedStyle(document.documentElement).getPropertyValue("--theme-primary").trim() || CATEGORY_COLORS[0];
+        color = idx === 0 ? themePrimary : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+      }
+
       const displayLabel = capitalize(category);
       return `
         <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
@@ -117,20 +130,6 @@ export function renderSpendingChart(transactions = []) {
     state.spendingChartInstance.data.labels = labelsCap;
     state.spendingChartInstance.update();
   } catch {}
-}
-
-export function highlightChartSegment(index) {
-  if (!state.spendingChartInstance) return;
-  const meta = state.spendingChartInstance.getDatasetMeta(0);
-  const item = meta.data[index];
-  if (item) {
-    state.spendingChartInstance.setActiveElements([{ datasetIndex: 0, index }]);
-    state.spendingChartInstance.tooltip.setActiveElements(
-      [{ datasetIndex: 0, index }],
-      { x: 0, y: 0 },
-    );
-    state.spendingChartInstance.update();
-  }
 }
 
 export function renderRoleSpendingChart(transactions = []) {
@@ -171,7 +170,6 @@ export function renderRoleSpendingChart(transactions = []) {
   const labelsCap = labels.map(capitalize);
   const data = entries.map(([, val]) => val);
 
-  // Different color palette for roles
   const roleColors = ["#6366f1", "#ec4899", "#8b5cf6", "#f59e0b", "#10b981"];
   const colors = entries.map((_, idx) => roleColors[idx % roleColors.length]);
 
@@ -239,6 +237,111 @@ export function renderRoleSpendingChart(transactions = []) {
     .join("");
 }
 
+export function renderRoleIncomeChart(transactions = []) {
+  const ctx = document.getElementById("roleIncomeChart");
+  const legend = document.getElementById("roleIncomeLegend");
+  const totalDisplay = document.getElementById("roleIncomeTotal");
+  if (!ctx || !legend) return;
+
+  const income = transactions.filter((t) => t.type === "income");
+  const totals = income.reduce((acc, tx) => {
+    const key = (tx.role || "unknown").toLowerCase();
+    acc[key] = (acc[key] || 0) + Math.abs(Number(tx.amount) || 0);
+    return acc;
+  }, {});
+
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const totalAmount = entries.reduce((sum, [, value]) => sum + value, 0);
+
+  if (totalDisplay) {
+    totalDisplay.textContent = `$${totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  }
+
+  if (!entries.length || totalAmount === 0) {
+    if (state.roleIncomeChartInstance) {
+      state.roleIncomeChartInstance.destroy();
+      state.roleIncomeChartInstance = null;
+    }
+    legend.innerHTML =
+      '<p class="text-slate-400 text-sm text-center py-4">No data yet.</p>';
+    return;
+  }
+
+  const labels = entries.map(([role]) => role);
+  const capitalize = (s) =>
+    typeof s === "string" && s.length
+      ? s.charAt(0).toUpperCase() + s.slice(1)
+      : s;
+  const labelsCap = labels.map(capitalize);
+  const data = entries.map(([, val]) => val);
+
+  const roleColors = ["#6366f1", "#ec4899", "#8b5cf6", "#f59e0b", "#10b981"];
+  const colors = entries.map((_, idx) => roleColors[idx % roleColors.length]);
+
+  if (state.roleIncomeChartInstance) {
+    state.roleIncomeChartInstance.destroy();
+  }
+
+  state.roleIncomeChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: labelsCap,
+      datasets: [
+        {
+          data: data,
+          backgroundColor: colors,
+          borderWidth: 2,
+          borderColor: "#ffffff",
+          hoverOffset: 0,
+        },
+      ],
+    },
+    options: {
+      cutout: "75%",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: 10 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: "#1e293b",
+          padding: 10,
+          cornerRadius: 6,
+          callbacks: {
+            label: (context) => {
+              const val = context.raw;
+              const percent = ((val / totalAmount) * 100).toFixed(1);
+              return ` ${context.label}: $${val.toLocaleString()} (${percent}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  legend.innerHTML = entries
+    .map(([role, value], idx) => {
+      const percent = ((value / totalAmount) * 100).toFixed(1);
+      const color = roleColors[idx % roleColors.length];
+      const displayLabel = capitalize(role);
+      return `
+        <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
+            <span class="font-medium text-slate-600">${displayLabel}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
+            <span class="text-[10px] text-slate-400 ml-1">${percent}%</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 export function renderChildSpendingStats(transactions = []) {
   const list = document.getElementById("childSpendingList");
   if (!list) return;
@@ -247,10 +350,8 @@ export function renderChildSpendingStats(transactions = []) {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Filter expenses by 'child' role and current month
   const childExpenses = transactions.filter(t => {
       const d = new Date(t.date);
-      // Ensure we treat it as an expense AND role matches "child" (or similar)
       const role = (t.role || "").toLowerCase();
       return t.type !== 'income' && 
              role === 'child' &&
@@ -263,7 +364,6 @@ export function renderChildSpendingStats(transactions = []) {
       return;
   }
 
-  // Group by child name
   const byChild = childExpenses.reduce((acc, t) => {
       const name = t.first_name || 'Unknown Child';
       acc[name] = (acc[name] || 0) + Math.abs(Number(t.amount) || 0);
@@ -287,6 +387,130 @@ export function renderChildSpendingStats(transactions = []) {
         <span class="font-bold text-slate-900">$${amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
       </div>
   `).join('')}`;
+}
+
+export function renderPersonSpendingChart(transactions = []) {
+  const ctx = document.getElementById("personSpendingChart");
+  const legend = document.getElementById("personSpendingLegend");
+  const totalDisplay = document.getElementById("personSpendingTotal");
+  if (!ctx || !legend) return;
+
+  const expenses = transactions.filter((t) => t.type !== "income");
+  const totals = expenses.reduce((acc, tx) => {
+    const name = `${(tx.first_name || "").trim()} ${(tx.last_name || "").trim()}`.trim() || "Unknown";
+    acc[name] = (acc[name] || 0) + Math.abs(Number(tx.amount) || 0);
+    return acc;
+  }, {});
+
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const totalAmount = entries.reduce((sum, [, value]) => sum + value, 0);
+  if (totalDisplay) totalDisplay.textContent = `$${totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  if (!entries.length || totalAmount === 0) {
+    if (state.personSpendingChartInstance) {
+      state.personSpendingChartInstance.destroy();
+      state.personSpendingChartInstance = null;
+    }
+    legend.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">No expense data yet.</p>';
+    return;
+  }
+
+  const labels = entries.map(([name]) => name);
+  const data = entries.map(([, val]) => val);
+  const colors = entries.map((_, idx) => CATEGORY_COLORS[idx % CATEGORY_COLORS.length]);
+
+  if (state.personSpendingChartInstance) state.personSpendingChartInstance.destroy();
+
+  state.personSpendingChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#ffffff" }] },
+    options: {
+      cutout: "75%",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: 10 },
+      plugins: { legend: { display: false } },
+    },
+  });
+
+  legend.innerHTML = entries.map(([name, value], idx) => {
+    const percent = ((value / totalAmount) * 100).toFixed(1);
+    const color = colors[idx % colors.length];
+    return `
+      <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+          <span class="font-medium text-slate-600">${name}</span>
+        </div>
+        <div class="text-right">
+          <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
+          <span class="text-[10px] text-slate-400 ml-1">${percent}%</span>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+export function renderPersonIncomeChart(transactions = []) {
+  const ctx = document.getElementById("personIncomeChart");
+  const legend = document.getElementById("personIncomeLegend");
+  const totalDisplay = document.getElementById("personIncomeTotal");
+  if (!ctx || !legend) return;
+
+  const incomes = transactions.filter((t) => t.type === "income");
+  const totals = incomes.reduce((acc, tx) => {
+    const name = `${(tx.first_name || "").trim()} ${(tx.last_name || "").trim()}`.trim() || "Unknown";
+    acc[name] = (acc[name] || 0) + Math.abs(Number(tx.amount) || 0);
+    return acc;
+  }, {});
+
+  const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const totalAmount = entries.reduce((sum, [, value]) => sum + value, 0);
+  if (totalDisplay) totalDisplay.textContent = `$${totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  if (!entries.length || totalAmount === 0) {
+    if (state.personIncomeChartInstance) {
+      state.personIncomeChartInstance.destroy();
+      state.personIncomeChartInstance = null;
+    }
+    legend.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">No income data yet.</p>';
+    return;
+  }
+
+  const labels = entries.map(([name]) => name);
+  const data = entries.map(([, val]) => val);
+  const colors = entries.map((_, idx) => CATEGORY_COLORS[(idx + 3) % CATEGORY_COLORS.length]);
+
+  if (state.personIncomeChartInstance) state.personIncomeChartInstance.destroy();
+
+  state.personIncomeChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: "#ffffff" }] },
+    options: {
+      cutout: "75%",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: 10 },
+      plugins: { legend: { display: false } },
+    },
+  });
+
+  legend.innerHTML = entries.map(([name, value], idx) => {
+    const percent = ((value / totalAmount) * 100).toFixed(1);
+    const color = colors[idx % colors.length];
+    return `
+      <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
+          <span class="font-medium text-slate-600">${name}</span>
+        </div>
+        <div class="text-right">
+          <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
+          <span class="text-[10px] text-slate-400 ml-1">${percent}%</span>
+        </div>
+      </div>`;
+  }).join("");
 }
 
 export function renderIncomeChart(transactions = []) {
@@ -328,7 +552,10 @@ export function renderIncomeChart(transactions = []) {
   const data = entries.map(([, val]) => val);
 
   const incomeColors = ["#10b981", "#059669", "#34d399", "#6ee7b7", "#a7f3d0"];
-  const colors = entries.map((_, idx) => incomeColors[idx % incomeColors.length]);
+  const colors = entries.map(([name], idx) => {
+    const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    return cat ? cat.color : incomeColors[idx % incomeColors.length];
+  });
 
   if (state.incomeChartInstance) {
     state.incomeChartInstance.destroy();
@@ -376,7 +603,12 @@ export function renderIncomeChart(transactions = []) {
   legend.innerHTML = entries
     .map(([category, value], idx) => {
       const percent = ((value / totalAmount) * 100).toFixed(1);
-      const color = incomeColors[idx % incomeColors.length];
+      
+      let color;
+      const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === category.toLowerCase());
+      if (cat) color = cat.color;
+      else color = incomeColors[idx % incomeColors.length];
+
       const displayLabel = capitalize(category);
       return `
         <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
@@ -393,3 +625,40 @@ export function renderIncomeChart(transactions = []) {
     })
     .join("");
 }
+
+window.toggleChartSource = function(type, source) {
+  
+  const groupContainer = document.getElementById(`${type}GroupContainer`);
+  const individualContainer = document.getElementById(`${type}IndividualContainer`);
+  const btnGroup = document.getElementById(`${type}ToggleGroup`);
+  const btnIndividual = document.getElementById(`${type}ToggleIndividual`);
+
+  if (!groupContainer || !individualContainer || !btnGroup || !btnIndividual) return;
+
+  if (source === 'group') {
+    groupContainer.classList.remove('hidden');
+    individualContainer.classList.add('hidden');
+    
+    btnGroup.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
+    btnGroup.classList.remove('text-slate-500', 'hover:text-slate-700');
+    
+    btnIndividual.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
+    btnIndividual.classList.add('text-slate-500', 'hover:text-slate-700');
+
+    if (type === 'income' && state.roleIncomeChartInstance) state.roleIncomeChartInstance.resize();
+    if (type === 'spending' && state.roleChartInstance) state.roleChartInstance.resize();
+
+  } else {
+    groupContainer.classList.add('hidden');
+    individualContainer.classList.remove('hidden');
+    
+    btnGroup.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
+    btnGroup.classList.add('text-slate-500', 'hover:text-slate-700');
+    
+    btnIndividual.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
+    btnIndividual.classList.remove('text-slate-500', 'hover:text-slate-700');
+
+    if (type === 'income' && state.personIncomeChartInstance) state.personIncomeChartInstance.resize();
+    if (type === 'spending' && state.personSpendingChartInstance) state.personSpendingChartInstance.resize();
+  }
+};

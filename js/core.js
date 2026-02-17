@@ -9,6 +9,7 @@ export const state = {
   spendingChartInstance: null,
   roleChartInstance: null,
   incomeChartInstance: null,
+  categoriesCache: [],
 };
 
 export const CATEGORY_COLORS = [
@@ -160,17 +161,3 @@ export function validateEmail(email) {
   return emailRegex.test(trimmed) && trimmed.length <= 255;
 }
 
-export function escapeHtml(unsafe) {
-  if (typeof unsafe !== "string") return "";
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-export function sanitizeNumber(value, defaultValue = 0) {
-  const num = parseFloat(value);
-  return isNaN(num) || !isFinite(num) ? defaultValue : num;
-}

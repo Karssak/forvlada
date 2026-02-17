@@ -40,7 +40,6 @@ export function initRegisterForm() {
   setupForm("registerForm", async (formData) => {
     const data = Object.fromEntries(formData);
     
-    // Validate names
     if (!data.firstName?.trim() || data.firstName.trim().length > 100) {
       throw new Error("First name must be 1-100 characters");
     }
@@ -48,12 +47,10 @@ export function initRegisterForm() {
       throw new Error("Last name must be 1-100 characters");
     }
     
-    // Validate email
     if (!validateEmail(data.email)) {
       throw new Error("Please enter a valid email address");
     }
     
-    // Validate password
     if (!data.password || data.password.length < 6 || data.password.length > 128) {
       throw new Error("Password must be 6-128 characters");
     }

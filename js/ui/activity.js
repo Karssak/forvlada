@@ -62,7 +62,6 @@ export function renderLiveEvents() {
         minute: "2-digit",
       });
       
-      // Format user info: Name (Role)
       let userInfo = "";
       if (evt.user_name) {
         userInfo = evt.user_name;
@@ -110,9 +109,13 @@ export function renderLiveEvents() {
 
       pagination.innerHTML = `
         <div class="flex items-center justify-center gap-2">
-          <button id="livePrev" class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed" ${page === 1 ? "disabled" : ""}>Prev</button>
+          <button id="livePrev" class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600" ${page === 1 ? "disabled" : ""}>
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
           ${pagesHtml}
-          <button id="liveNext" class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed" ${page === totalPages ? "disabled" : ""}>Next</button>
+          <button id="liveNext" class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600" ${page === totalPages ? "disabled" : ""}>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
         </div>
       `;
 

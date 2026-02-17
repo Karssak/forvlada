@@ -26,12 +26,10 @@ def handle_budgets():
         if category is None or amount is None:
             return jsonify({"error": "Missing fields"}), 400
         
-        # Validate category
         category = str(category).strip()
         if not category or len(category) > 100:
             return jsonify({"error": "Category must be 1-100 characters"}), 400
         
-        # Validate amount
         try:
             amount = float(amount)
             if amount <= 0 or amount > 999999999:
@@ -39,14 +37,31 @@ def handle_budgets():
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid amount format"}), 400
         
-        # Validate period
         if period not in ["daily", "weekly", "monthly", "yearly"]:
             return jsonify({"error": "Period must be daily, weekly, monthly, or yearly"}), 400
 
         with get_db() as conn:
+            cat_row = conn.execute(
+                "SELECT id, name FROM categories WHERE family_id = ? AND LOWER(name) = LOWER(?)",
+                (family_id, category),
+            ).fetchone()
+            if not cat_row:
+                default_color = "#FF5722"
+                conn.execute(
+                    "INSERT INTO categories (family_id, name, type, is_default, color) VALUES (?, ?, 'expense', 0, ?)",
+                    (family_id, category, default_color),
+                )
+                conn.commit()
+                cat_row = conn.execute(
+                    "SELECT id, name FROM categories WHERE family_id = ? AND LOWER(name) = LOWER(?)",
+                    (family_id, category),
+                ).fetchone()
+
+            canonical_name = cat_row["name"] if cat_row else category
+
             existing = conn.execute(
                 "SELECT id FROM budgets WHERE family_id = ? AND category = ?",
-                (family_id, category),
+                (family_id, canonical_name),
             ).fetchone()
             if existing:
                 conn.execute(
@@ -56,7 +71,7 @@ def handle_budgets():
             else:
                 conn.execute(
                     "INSERT INTO budgets (family_id, category, amount, period) VALUES (?, ?, ?, ?)",
-                    (family_id, category, amount, period),
+                    (family_id, canonical_name, amount, period),
                 )
             conn.commit()
 

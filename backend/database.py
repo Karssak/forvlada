@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from typing import List, Any, Optional
+from typing import Any, Optional
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "users.db")
@@ -84,6 +84,15 @@ def init_db():
                   category TEXT NOT NULL,
                   amount REAL NOT NULL,
                   period TEXT DEFAULT 'monthly')""",
+        "categories": """CREATE TABLE IF NOT EXISTS categories
+             (id INTEGER PRIMARY KEY AUTOINCREMENT,
+              family_id INTEGER NOT NULL,
+              name TEXT NOT NULL,
+              type TEXT NOT NULL DEFAULT 'expense',
+              is_default INTEGER DEFAULT 0,
+              color TEXT,
+              import_source TEXT,
+              UNIQUE(family_id, name))""",
     }
 
     with get_db() as conn:

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, send_from_directory
+from flask import Flask
 from .extensions import socketio
 from .database import init_db
 from .routes import register_routes
@@ -14,8 +14,8 @@ def create_app():
         app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey')
         app.config['SESSION_COOKIE_HTTPONLY'] = True
         app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-        app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
-        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request size
+        app.config['PERMANENT_SESSION_LIFETIME'] = 86400
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
         socketio.init_app(app)
 

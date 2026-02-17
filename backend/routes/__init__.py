@@ -5,6 +5,7 @@ from .transactions import transactions_bp
 from .goals import goals_bp
 from .budgets import budgets_bp
 from .common import common_bp
+from .categories import categories_bp
 
 
 def register_routes(app):
@@ -15,3 +16,4 @@ def register_routes(app):
     app.register_blueprint(goals_bp)
     app.register_blueprint(budgets_bp)
     app.register_blueprint(common_bp)
+    app.register_blueprint(categories_bp)

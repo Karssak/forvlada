@@ -11,14 +11,12 @@ export async function loadFamilyMembers() {
     const list = document.getElementById("familyMembersList");
     if (!list) return;
 
-    // Handle Admin delete family button
     const dangerZone = document.getElementById("familySettingsArea");
     if (dangerZone) {
       if (state.currentUser?.role === 'admin') {
         dangerZone.classList.remove('hidden');
         const delBtn = document.getElementById("deleteFamilyBtn");
         if (delBtn) delBtn.onclick = () => openDeleteFamilyModal();
-        // ensure modal handlers are attached when admin view is active
         setupDeleteFamilyHandlers();
       } else {
         dangerZone.classList.add('hidden');
@@ -138,7 +136,6 @@ async function assignRole(userId, role) {
 }
 
 async function deleteFamily() {
-  // kept for backward compatibility; prefer using modal
   openDeleteFamilyModal();
 }
 
@@ -156,13 +153,10 @@ function setupDeleteFamilyHandlers() {
   const confirmBtn = document.getElementById('confirmDeleteFamilyBtn');
   const closeBtns = modal.querySelectorAll('[onclick]');
 
-  // attach close behavior to any inline close buttons so modal hides
   closeBtns.forEach((b) => {
-    // leave existing inline onclicks
   });
 
   if (confirmBtn) {
-    // use onclick to avoid duplicate event handlers
     confirmBtn.onclick = async () => {
       const pwdInput = document.getElementById('deleteFamilyPasswordInput');
       const password = pwdInput?.value;

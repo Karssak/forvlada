@@ -62,28 +62,15 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-semibold mb-2 text-slate-700"
-            >Category</label
-          >
-          <input
-            type="text"
+          <label class="block text-sm font-semibold mb-2 text-slate-700">Category</label>
+          <select
+            id="transactionCategorySelect"
             name="category"
-            list="categoryOptions"
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Select or type custom category"
-          />
-          <datalist id="categoryOptions">
-            <option value="Food & Dining">
-            <option value="Shopping">
-            <option value="Transport">
-            <option value="Bills & Utilities">
-            <option value="Entertainment">
-            <option value="Salary">
-            <option value="Groceries">
-            <option value="Health">
-            <option value="Education">
-            <option value="Other">
-          </datalist>
+            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="" disabled selected>Select a category</option>
+            <!-- Populated by JS -->
+          </select>
         </div>
       </div>
       <div class="space-y-3 border border-slate-200 rounded-xl p-3 bg-slate-50">
@@ -349,15 +336,12 @@
           >Category</label
         >
         <select
+          id="budgetCategorySelect"
           name="category"
           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
         >
-          <option value="food">Food & Dining</option>
-          <option value="shopping">Shopping</option>
-          <option value="transport">Transport</option>
-          <option value="bills">Bills & Utilities</option>
-          <option value="entertainment">Entertainment</option>
-          <option value="other">Other</option>
+            <option value="" disabled selected>Select a category</option>
+            <!-- Populated by JS -->
         </select>
       </div>
       <div>

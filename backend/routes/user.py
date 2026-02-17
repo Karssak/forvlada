@@ -48,7 +48,6 @@ def update_profile():
         if not validate_fields(data, fields):
                 return jsonify({"error": "Missing fields"}), 400
         
-        # Validate and sanitize names
         first_name = str(data["firstName"]).strip()
         last_name = str(data["lastName"]).strip()
         if not first_name or len(first_name) > 100:
@@ -56,7 +55,6 @@ def update_profile():
         if not last_name or len(last_name) > 100:
                 return jsonify({"error": "Last name must be 1-100 characters"}), 400
         
-        # Validate email
         email = str(data["email"]).strip().lower()
         if not email or len(email) > 255 or "@" not in email or "." not in email.split("@")[1]:
                 return jsonify({"error": "Invalid email format"}), 400

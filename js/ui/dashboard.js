@@ -14,6 +14,7 @@ import {
 } from "./transactions.js";
 import { loadGoals, initGoalForm, initGoalAdjustForm } from "./goals.js";
 import { loadBudgets, initBudgetForm } from "./budgets.js";
+import { loadCategories, initCategoryForm } from "./categories.js";
 import { joinSocketRoom, setupSocketListeners } from "../socket.js";
 import { renderLiveEvents } from "./activity.js";
 import { initFamilyForms } from "./auth.js";
@@ -62,8 +63,11 @@ export async function initDashboardPage() {
   initGoalForm();
   initGoalAdjustForm();
   initBudgetForm();
+  initCategoryForm();
   initSettingsForms();
   populateSettingsForms();
+
+  await loadCategories();
 
   await Promise.all([
     loadFamilyMembers(),

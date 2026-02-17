@@ -1,5 +1,5 @@
 import { apiCall, state, setupForm, validateAmount, validateString } from "../core.js";
-import { renderSpendingChart, renderRoleSpendingChart, renderChildSpendingStats, renderIncomeChart } from "./chart.js";
+import { renderSpendingChart, renderRoleSpendingChart, renderChildSpendingStats, renderIncomeChart, renderPersonSpendingChart, renderPersonIncomeChart, renderRoleIncomeChart } from "./chart.js";
 
 const TRANSACTION_PAGE_SIZE = 5;
 let transactionPage = 1;
@@ -15,14 +15,17 @@ export async function loadTransactions() {
     renderRecurringBills(state.transactionsCache);
     renderSpendingChart(state.transactionsCache);
     renderRoleSpendingChart(state.transactionsCache);
+    renderRoleIncomeChart(state.transactionsCache);
     renderChildSpendingStats(state.transactionsCache);
+    try { renderPersonSpendingChart(state.transactionsCache); } catch {}
     renderIncomeChart(state.transactionsCache);
+    try { renderPersonIncomeChart(state.transactionsCache); } catch {}
 
     if (typeof lucide !== "undefined") lucide.createIcons();
   } catch {}
 }
 
-export function updateTransactionStats(transactions = []) {
+function updateTransactionStats(transactions = []) {
   const balanceEl = document.getElementById("totalBalance");
   const incomeEl = document.getElementById("monthlyIncome");
   const expensesEl = document.getElementById("monthlyExpenses");
@@ -47,7 +50,7 @@ export function updateTransactionStats(transactions = []) {
   if (expensesEl) expensesEl.textContent = `$${expenses.toFixed(2)}`;
 }
 
-export function renderTransactions() {
+function renderTransactions() {
   const list = document.getElementById("recentTransactionsList");
   if (!list) return;
 
@@ -77,7 +80,11 @@ export function renderTransactions() {
   list.innerHTML = pageItems
     .map((t) => {
       const isIncome = t.type === "income";
-      const category = (t.category || "").toLowerCase();
+      const categoryName = t.category || "Others";
+      
+      const catObj = state.categories ? state.categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) : null;
+      const color = catObj ? catObj.color : (isIncome ? "#16a34a" : "#ea580c");
+
       const iconMap = {
         groceries: "shopping-cart",
         food: "coffee",
@@ -96,13 +103,9 @@ export function renderTransactions() {
         health: "heart",
         credit: "credit-card",
       };
-      const icon =
-        iconMap[category] || (isIncome ? "dollar-sign" : "shopping-bag");
-      const colorClass = isIncome ? "text-green-600" : "text-orange-600";
-      const bgClass = isIncome ? "bg-green-50" : "bg-orange-50";
-      const badgeClass = isIncome
-        ? "bg-green-100 text-green-700"
-        : "bg-orange-100 text-orange-700";
+      
+      const icon = iconMap[categoryName.toLowerCase()] || (isIncome ? "dollar-sign" : "shopping-bag");
+      
       const sign = isIncome ? "+" : "-";
       const recurringBadge = t.is_recurring
         ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] border border-[var(--theme-primary-border)]">Recurring</span>'
@@ -117,8 +120,8 @@ export function renderTransactions() {
       return `
         <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white hover:border-[var(--theme-primary-border)] transition">
           <div class="flex items-center gap-4">
-            <div class="w-10 h-10 ${bgClass} rounded-full flex items-center justify-center">
-              <i data-lucide="${icon}" class="w-5 h-5 ${colorClass}"></i>
+            <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background-color: ${color}20">
+              <i data-lucide="${icon}" class="w-5 h-5" style="color: ${color}"></i>
             </div>
             <div class="min-w-0">
               <p class="font-bold text-slate-900 truncate">${t.description}</p>
@@ -128,8 +131,8 @@ export function renderTransactions() {
           </div>
           <div class="flex items-center gap-4">
             <div class="text-right">
-              <div class="font-bold ${colorClass}">${sign}$${Number(t.amount).toFixed(2)}</div>
-              <span class="inline-flex mt-1 px-2 py-0.5 text-xs rounded-full ${badgeClass}">${(t.category || "General").charAt(0).toUpperCase() + (t.category || "General").slice(1)}</span>
+              <div class="font-bold" style="color: ${color}">${sign}$${Number(t.amount).toFixed(2)}</div>
+              <span class="inline-flex mt-1 px-2 py-0.5 text-xs rounded-full" style="background-color: ${color}20; color: ${color}">${(t.category || "Others").charAt(0).toUpperCase() + (t.category || "Others").slice(1)}</span>
             </div>
             <button class="p-2 text-slate-400 hover:text-red-500 transition-colors" data-delete-transaction="${t.id}" title="Delete Transaction">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -205,7 +208,7 @@ export function renderTransactions() {
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
-export function renderRecurringBills(transactions = []) {
+function renderRecurringBills(transactions = []) {
   const recurringList = document.getElementById("recurringBillsList");
   const countEl = document.getElementById("recurringCount");
   if (!recurringList) return;
@@ -284,17 +287,14 @@ export function initTransactionForm() {
     const type = formData.get("type");
     const category = formData.get("category");
     
-    // Validate amount
     if (!validateAmount(amount, 0, 999999999)) {
       throw new Error("Amount must be between 0 and 999,999,999");
     }
     
-    // Validate description
     if (!validateString(description, 1, 500)) {
       throw new Error("Description must be 1-500 characters");
     }
     
-    // Validate type
     if (!type || !["income", "expense"].includes(type)) {
       throw new Error("Please select a transaction type");
     }
@@ -303,7 +303,7 @@ export function initTransactionForm() {
       amount: parseFloat(amount),
       description: description.trim(),
       type: type,
-      category: category || "General",
+      category: category || "Others",
       isRecurring: formData.get("isRecurring") === "on",
       recurrence: formData.get("recurrence"),
       nextDueDate: formData.get("nextDueDate"),

@@ -3,12 +3,13 @@ import { apiCall, setupForm, validateAmount, validateString, state } from "../co
 export async function loadGoals() {
   try {
     const addBtn = document.getElementById("addGoalBtn");
+    const isChild = state.currentUser?.role === 'child';
     if (addBtn) {
-        if (state.currentUser?.role === 'child') {
-            addBtn.classList.add('hidden');
-        } else {
-            addBtn.classList.remove('hidden');
-        }
+      if (isChild) {
+        addBtn.classList.add('hidden');
+      } else {
+        addBtn.classList.remove('hidden');
+      }
     }
 
     const goals = await apiCall(`/api/goals?t=${Date.now()}`);
@@ -26,19 +27,21 @@ export async function loadGoals() {
           ? Math.min(100, (g.current_amount / target) * 100)
           : 0;
         return `
-          <div class="theme-surface-card p-4 rounded-2xl flex flex-col h-full bg-white relative">
-            <button class="absolute top-2 right-2 p-2 text-slate-300 hover:text-red-500 transition-colors" data-delete-goal="${g.id}" title="Delete Goal">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-            <div class="flex items-start justify-between mb-3 pr-8">
-              <div class="flex items-center gap-3">
-                <i data-lucide="flag" class="w-5 h-5 text-indigo-500"></i>
-                <div>
-                  <p class="font-bold text-slate-900">${g.name}</p>
-                  <p class="text-xs text-slate-500">Target: $${Number(g.target_amount).toFixed(2)}</p>
+          <div class="theme-surface-card p-4 rounded-2xl flex flex-col h-full bg-white relative group">
+            <div class="absolute top-[18p x] right-2 flex flex-col items-end gap-1">
+                 <button class="p-1 text-slate-300 hover:text-red-500 transition-colors" data-delete-goal="${g.id}" title="Delete Goal">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="flex items-start justify-between mb-3 pr-6">
+              <div class="flex items-center gap-3 min-w-0">
+                <i data-lucide="flag" class="w-5 h-5 text-indigo-500 flex-shrink-0"></i>
+                <div class="min-w-0">
+                  <p class="font-bold text-slate-900 truncate">${g.name}</p>
+                  <p class="text-xs text-slate-500 break-words">Target: $${Number(g.target_amount).toFixed(2)}</p>
                 </div>
               </div>
-              <div class="text-right">
+              <div class="text-right ml-2 flex-shrink-0">
                 <span class="font-bold text-slate-700">$${Number(g.current_amount).toFixed(2)}</span>
               </div>
             </div>
@@ -54,8 +57,8 @@ export async function loadGoals() {
               </div>
             </div>
             <div class="mt-3 flex gap-2">
-              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200" data-goal-adjust="add" data-goal-id="${g.id}">Add</button>
-              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200" data-goal-adjust="subtract" data-goal-id="${g.id}">Withdraw</button>
+              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 ${isChild ? 'hidden' : ''}" data-goal-adjust="add" data-goal-id="${g.id}">Add</button>
+              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 ${isChild ? 'hidden' : ''}" data-goal-adjust="subtract" data-goal-id="${g.id}">Withdraw</button>
             </div>
           </div>
         `;
@@ -63,10 +66,10 @@ export async function loadGoals() {
       .join("");
 
     list.querySelectorAll("[data-delete-goal]").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            deleteGoal(btn.getAttribute("data-delete-goal"));
-        });
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteGoal(btn.getAttribute("data-delete-goal"));
+      });
     });
 
     list.querySelectorAll("[data-goal-adjust]").forEach((btn) => {
@@ -77,10 +80,10 @@ export async function loadGoals() {
       });
     });
     if (typeof lucide !== "undefined") lucide.createIcons();
-  } catch {}
+  } catch { }
 }
 
-export function openGoalAdjustModal(goalId, action = "add") {
+function openGoalAdjustModal(goalId, action = "add") {
   const modal = document.getElementById("adjustGoalModal");
   const form = document.getElementById("adjustGoalForm");
   if (!modal || !form) return;
@@ -104,25 +107,22 @@ export function initGoalForm() {
     const name = formData.get("name");
     const targetAmount = formData.get("targetAmount");
     const currentAmount = formData.get("currentAmount") || 0;
-    
-    // Validate name
+
     if (!validateString(name, 1, 200)) {
       throw new Error("Goal name must be 1-200 characters");
     }
-    
-    // Validate target amount
+
     if (!validateAmount(targetAmount, 0, 999999999)) {
       throw new Error("Target amount must be between 0 and 999,999,999");
     }
-    
+
     const targetNum = parseFloat(targetAmount);
     const currentNum = parseFloat(currentAmount);
-    
-    // Validate current amount
+
     if (currentNum < 0 || currentNum > targetNum) {
       throw new Error("Current amount cannot exceed target amount");
     }
-    
+
     const data = {
       name: name.trim(),
       targetAmount: targetNum,
@@ -157,25 +157,22 @@ export function initGoalAdjustForm() {
     const goalId = formData.get("goalId");
     const action = formData.get("action") || "add";
     const amount = formData.get("amount");
-    
-    // Validate goal ID
+
     if (!goalId || parseInt(goalId) <= 0) {
       throw new Error("Invalid goal");
     }
-    
-    // Validate amount
+
     if (!validateAmount(amount, 0, 999999999)) {
       throw new Error("Amount must be between 0 and 999,999,999");
     }
-    
-    // Validate action
+
     if (!["add", "subtract"].includes(action)) {
       throw new Error("Invalid action");
     }
 
-    await apiCall(`/api/goals/${goalId}/adjust`, "POST", { 
-      amount: parseFloat(amount), 
-      action 
+    await apiCall(`/api/goals/${goalId}/adjust`, "POST", {
+      amount: parseFloat(amount),
+      action
     });
     form.reset();
     document.getElementById("adjustGoalModal")?.classList.add("hidden");
@@ -184,11 +181,11 @@ export function initGoalAdjustForm() {
 }
 
 async function deleteGoal(id) {
-    if (!confirm("Are you sure you want to delete this goal?")) return;
-    try {
-        await apiCall(`/api/goals/${id}`, "DELETE");
-        loadGoals();
-    } catch (err) {
-        console.error("Failed to delete goal:", err);
-    }
+  if (!confirm("Are you sure you want to delete this goal?")) return;
+  try {
+    await apiCall(`/api/goals/${id}`, "DELETE");
+    loadGoals();
+  } catch (err) {
+    console.error("Failed to delete goal:", err);
+  }
 }

@@ -15,7 +15,6 @@ def register():
         if not validate_fields(data, fields):
                 return jsonify({"error": "Missing fields"}), 400
         
-        # Validate and sanitize names
         first_name = str(data["firstName"]).strip()
         last_name = str(data["lastName"]).strip()
         if not first_name or len(first_name) > 100:
@@ -23,12 +22,10 @@ def register():
         if not last_name or len(last_name) > 100:
                 return jsonify({"error": "Last name must be 1-100 characters"}), 400
         
-        # Validate email format
         email = str(data["email"]).strip().lower()
         if not email or len(email) > 255 or "@" not in email or "." not in email.split("@")[1]:
                 return jsonify({"error": "Invalid email format"}), 400
         
-        # Validate password strength
         password = data["password"]
         if len(password) < 6 or len(password) > 128:
                 return jsonify({"error": "Password must be 6-128 characters"}), 400
@@ -55,7 +52,6 @@ def login():
         if not email or not password:
                 return jsonify({"error": "Email and password required"}), 400
         
-        # Sanitize email
         email = str(email).strip().lower()
         if len(email) > 255:
                 return jsonify({"error": "Invalid credentials"}), 401

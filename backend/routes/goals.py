@@ -27,12 +27,10 @@ def handle_goals():
                 if name is None or target_amount is None:
                         return jsonify({"error": "Missing fields"}), 400
                 
-                # Validate name
                 name = str(name).strip()
                 if not name or len(name) > 200:
                         return jsonify({"error": "Goal name must be 1-200 characters"}), 400
                 
-                # Validate target amount
                 try:
                         target_amount = float(target_amount)
                         if target_amount <= 0 or target_amount > 999999999:
@@ -40,7 +38,6 @@ def handle_goals():
                 except (ValueError, TypeError):
                         return jsonify({"error": "Invalid target amount"}), 400
                 
-                # Validate current amount
                 try:
                         current_amount = float(current_amount)
                         if current_amount < 0 or current_amount > target_amount:
@@ -73,11 +70,9 @@ def adjust_goal(goal_id):
         amount = data.get("amount")
         action = data.get("action", "add")
         
-        # Validate goal_id
         if goal_id <= 0:
                 return jsonify({"error": "Invalid goal ID"}), 400
         
-        # Validate action
         if action not in ["add", "subtract"]:
                 return jsonify({"error": "Action must be 'add' or 'subtract'"}), 400
 
@@ -90,6 +85,10 @@ def adjust_goal(goal_id):
                         return jsonify({"error": "Amount must be between 0 and 999,999,999"}), 400
         except (ValueError, TypeError):
                 return jsonify({"error": "Invalid amount format"}), 400
+
+        user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
+        if user and user["role"] == "child":
+                return jsonify({"error": "Children cannot modify goals"}), 403
 
         with get_db() as conn:
                 family_id = get_user_family_id()
@@ -127,12 +126,10 @@ def delete_goal(goal_id):
     if not family_id:
         return jsonify({"error": "No family found"}), 404
 
-    # Check permission
     user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
     if user and user["role"] == "child":
         return jsonify({"error": "Children cannot delete goals"}), 403
 
-    # Check if goal exists
     goal = query_db("SELECT name FROM goals WHERE id = ? AND family_id = ?", (goal_id, family_id), one=True)
     if not goal:
         return jsonify({"error": "Goal not found"}), 404

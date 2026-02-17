@@ -18,7 +18,6 @@ def handle_families():
         if not name:
             return jsonify({"error": "Missing fields"}), 400
         
-        # Validate family name
         name = str(name).strip()
         if not name or len(name) > 200:
             return jsonify({"error": "Family name must be 1-200 characters"}), 400
@@ -28,6 +27,23 @@ def handle_families():
         with get_db() as conn:
             family_id = execute_db("INSERT INTO families (name, created_by, invite_code) VALUES (?, ?, ?)", (name, session["user_id"], invite_code))
             conn.execute("UPDATE users SET family_id = ?, role = 'admin' WHERE id = ?", (family_id, session["user_id"]))
+            
+            default_categories = [
+                ("Food", "expense", "#FF5722"),
+                ("Transport", "expense", "#03A9F4"),
+                ("Housing", "expense", "#8BC34A"),
+                ("Utilities", "expense", "#FFC107"),
+                ("Entertainment", "expense", "#9C27B0"),
+                ("Health", "expense", "#F44336"),
+                ("Others", "expense", "#607D8B"),
+                ("Salary", "income", "#4CAF50"),
+                ("Investment", "income", "#009688")
+            ]
+            
+            for name, cat_type, color in default_categories:
+                 conn.execute("INSERT INTO categories (family_id, name, type, color, is_default) VALUES (?, ?, ?, ?, 1)", 
+                              (family_id, name, cat_type, color))
+
             conn.commit()
 
         emit_activity(family_id, "Family created", f"{name} created", category="family")
@@ -53,7 +69,6 @@ def update_family():
     if not name:
         return jsonify({"error": "Missing fields"}), 400
     
-    # Validate family name
     name = str(name).strip()
     if not name or len(name) > 200:
         return jsonify({"error": "Family name must be 1-200 characters"}), 400
@@ -73,7 +88,6 @@ def join_family():
     if not code:
         return jsonify({"error": "Missing invite code"}), 400
     
-    # Validate invite code format
     code = str(code).strip().upper()
     if len(code) != 6 or not code.isalnum():
         return jsonify({"error": "Invalid invite code format"}), 400
@@ -215,7 +229,6 @@ def delete_family_route():
     if not check_password_hash(requester["password"], password):
          return jsonify({"error": "Invalid password"}), 403
 
-    # Delete family
     with get_db() as conn:
         conn.execute("UPDATE users SET family_id = NULL, role = 'child' WHERE family_id = ?", (family_id,))
         conn.execute("DELETE FROM families WHERE id = ?", (family_id,))

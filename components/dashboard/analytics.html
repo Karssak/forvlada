@@ -3,7 +3,8 @@
     <i data-lucide="bar-chart-3" class="w-5 h-5 text-slate-700"></i>
     Financial Analytics
   </h3>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="theme-surface-card p-6 rounded-2xl">
       <h4 class="font-bold text-slate-900 mb-4">Income by Category</h4>
       <div class="flex flex-col lg:flex-row gap-8 items-center">
@@ -60,6 +61,93 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    
+    <div class="theme-surface-card p-6 rounded-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-bold text-slate-900">Income Breakdown</h4>
+        <div class="flex bg-slate-100 p-1 rounded-lg">
+          <button id="incomeToggleGroup" onclick="toggleChartSource('income', 'group')" class="px-3 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-slate-900 transition-all">By Group</button>
+          <button id="incomeToggleIndividual" onclick="toggleChartSource('income', 'individual')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all">By Individual</button>
+        </div>
+      </div>
+
+      <div id="incomeGroupContainer">
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+          <div class="relative w-72 h-72">
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style="z-index: 1">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
+              <span id="roleIncomeTotal" class="text-2xl font-bold text-emerald-600">$0</span>
+            </div>
+            <canvas id="roleIncomeChart" style="position: relative; z-index: 10"></canvas>
+          </div>
+          <div class="flex-1 w-full">
+            <div id="roleIncomeLegend" class="space-y-2 text-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="incomeIndividualContainer" class="hidden">
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+          <div class="relative w-72 h-72">
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style="z-index: 1">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
+              <span id="personIncomeTotal" class="text-2xl font-bold text-emerald-600">$0</span>
+            </div>
+            <canvas id="personIncomeChart" style="position: relative; z-index: 10"></canvas>
+          </div>
+          <div class="flex-1 w-full">
+            <div id="personIncomeLegend" class="space-y-2 text-sm"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="theme-surface-card p-6 rounded-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-bold text-slate-900">Spending Breakdown</h4>
+        <div class="flex bg-slate-100 p-1 rounded-lg">
+          <button id="spendingToggleGroup" onclick="toggleChartSource('spending', 'group')" class="px-3 py-1 text-xs font-medium rounded-md bg-white shadow-sm text-slate-900 transition-all">By Group</button>
+          <button id="spendingToggleIndividual" onclick="toggleChartSource('spending', 'individual')" class="px-3 py-1 text-xs font-medium rounded-md text-slate-500 hover:text-slate-700 transition-all">By Individual</button>
+        </div>
+      </div>
+
+      <div id="spendingGroupContainer">
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+          <div class="relative w-72 h-72">
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style="z-index: 1">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
+              <span id="roleChartTotal" class="text-2xl font-bold text-theme-primary-strong">$0</span>
+            </div>
+            <canvas id="roleSpendingChart" style="position: relative; z-index: 10"></canvas>
+          </div>
+          <div class="flex-1 w-full">
+            <div id="roleSpendingLegend" class="space-y-2 text-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="spendingIndividualContainer" class="hidden">
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+          <div class="relative w-72 h-72">
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style="z-index: 1">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total</span>
+              <span id="personSpendingTotal" class="text-2xl font-bold text-theme-primary-strong">$0</span>
+            </div>
+            <canvas id="personSpendingChart" style="position: relative; z-index: 10"></canvas>
+          </div>
+          <div class="flex-1 w-full">
+            <div id="personSpendingLegend" class="space-y-2 text-sm"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="theme-surface-card p-6 rounded-2xl">
       <div class="flex items-center justify-between mb-4">
         <h4 class="font-bold text-slate-900">Recurring Transactions</h4>
@@ -73,37 +161,7 @@
         <p class="text-center text-slate-400 py-6">No recurring transactions yet.</p>
       </div>
     </div>
-  </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-    <!-- Spending by Role -->
-    <div class="theme-surface-card p-6 rounded-2xl">
-      <h4 class="font-bold text-slate-900 mb-4">Spending by Role</h4>
-      <div class="flex flex-col lg:flex-row gap-8 items-center">
-        <div class="relative w-72 h-72">
-           <div
-            class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-            style="z-index: 1"
-          >
-            <span
-              class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-              >Total</span
-            >
-            <span
-              id="roleChartTotal"
-              class="text-2xl font-bold text-theme-primary-strong"
-              >$0</span
-            >
-          </div>
-          <canvas id="roleSpendingChart" style="position: relative; z-index: 10"></canvas>
-        </div>
-        <div class="flex-1 w-full">
-          <div id="roleSpendingLegend" class="space-y-2 text-sm"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Child Spending Stats -->
     <div class="theme-surface-card p-6 rounded-2xl">
       <div class="flex items-center justify-between mb-4">
         <h4 class="font-bold text-slate-900">Child Spending (This Month)</h4>
@@ -113,4 +171,5 @@
       </div>
     </div>
   </div>
+
 </div>

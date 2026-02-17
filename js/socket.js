@@ -4,6 +4,7 @@ import { loadFamilyMembers, loadRoles } from "./ui/family.js";
 import { loadTransactions } from "./ui/transactions.js";
 import { loadGoals } from "./ui/goals.js";
 import { loadBudgets } from "./ui/budgets.js";
+import { loadCategories } from "./ui/categories.js";
 
 export function joinSocketRoom(familyId) {
   if (!familyId) return;
@@ -46,6 +47,7 @@ export function setupSocketListeners() {
   state.socket.off("update_budgets");
   state.socket.off("update_roles");
   state.socket.off("update_family");
+  state.socket.off("update_categories");
   state.socket.off("activity_event");
   state.socket.off("activity_sync");
 
@@ -66,6 +68,9 @@ export function setupSocketListeners() {
   });
   state.socket.on("update_roles", (payload) => {
     if (payload.family_id === familyRoomId) loadRoles();
+  });
+  state.socket.on("update_categories", (payload) => {
+    if (payload.family_id === familyRoomId) loadCategories();
   });
   state.socket.on("update_family", async (payload) => {
     if (payload.family_id === familyRoomId) {
