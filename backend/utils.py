@@ -1,7 +1,9 @@
 import random
 import string
 from functools import wraps
-from flask import session, jsonify
+
+from flask import jsonify, session
+
 from backend.database import query_db
 
 

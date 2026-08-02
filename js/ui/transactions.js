@@ -1,4 +1,4 @@
-import { apiCall, state, setupForm, validateAmount, validateString } from "../core.js";
+import { apiCall, state, setupForm, validateAmount, validateString, escapeHtml } from "../core.js";
 import { renderSpendingChart, renderRoleSpendingChart, renderChildSpendingStats, renderIncomeChart, renderPersonSpendingChart, renderPersonIncomeChart, renderRoleIncomeChart } from "./chart.js";
 
 const TRANSACTION_PAGE_SIZE = 5;
@@ -10,7 +10,7 @@ export async function loadTransactions() {
       `/api/transactions?t=${Date.now()}`,
     );
     updateTransactionStats(state.transactionsCache);
-    transactionPage = 1; 
+    transactionPage = 1;
     renderTransactions();
     renderRecurringBills(state.transactionsCache);
     renderSpendingChart(state.transactionsCache);
@@ -70,7 +70,6 @@ function renderTransactions() {
 
   const paginationContainer = document.getElementById("transactionPagination");
 
-  
   const page = transactionPage;
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / TRANSACTION_PAGE_SIZE));
@@ -81,7 +80,7 @@ function renderTransactions() {
     .map((t) => {
       const isIncome = t.type === "income";
       const categoryName = t.category || "Others";
-      
+
       const catObj = state.categories ? state.categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase()) : null;
       const color = catObj ? catObj.color : (isIncome ? "#16a34a" : "#ea580c");
 
@@ -103,9 +102,9 @@ function renderTransactions() {
         health: "heart",
         credit: "credit-card",
       };
-      
+
       const icon = iconMap[categoryName.toLowerCase()] || (isIncome ? "dollar-sign" : "shopping-bag");
-      
+
       const sign = isIncome ? "+" : "-";
       const recurringBadge = t.is_recurring
         ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-full bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] border border-[var(--theme-primary-border)]">Recurring</span>'
@@ -116,7 +115,7 @@ function renderTransactions() {
       const roleLabel = t.role ? t.role.charAt(0).toUpperCase() + t.role.slice(1) : "";
       const userInfo = t.first_name || "";
       const userWithRole = roleLabel ? `${userInfo} (${roleLabel})` : userInfo;
-      
+
       return `
         <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white hover:border-[var(--theme-primary-border)] transition">
           <div class="flex items-center gap-4">
@@ -124,15 +123,15 @@ function renderTransactions() {
               <i data-lucide="${icon}" class="w-5 h-5" style="color: ${color}"></i>
             </div>
             <div class="min-w-0">
-              <p class="font-bold text-slate-900 truncate">${t.description}</p>
-              <p class="text-xs text-slate-500">${new Date(t.date).toLocaleDateString()} • ${userWithRole}${nextDue}</p>
+              <p class="font-bold text-slate-900 truncate">${escapeHtml(t.description)}</p>
+              <p class="text-xs text-slate-500">${new Date(t.date).toLocaleDateString()} • ${escapeHtml(userWithRole)}${nextDue}</p>
               ${recurringBadge ? `<div class="mt-1">${recurringBadge}</div>` : ""}
             </div>
           </div>
           <div class="flex items-center gap-4">
             <div class="text-right">
               <div class="font-bold" style="color: ${color}">${sign}$${Number(t.amount).toFixed(2)}</div>
-              <span class="inline-flex mt-1 px-2 py-0.5 text-xs rounded-full" style="background-color: ${color}20; color: ${color}">${(t.category || "Others").charAt(0).toUpperCase() + (t.category || "Others").slice(1)}</span>
+              <span class="inline-flex mt-1 px-2 py-0.5 text-xs rounded-full" style="background-color: ${color}20; color: ${color}">${escapeHtml((t.category || "Others").charAt(0).toUpperCase() + (t.category || "Others").slice(1))}</span>
             </div>
             <button class="p-2 text-slate-400 hover:text-red-500 transition-colors" data-delete-transaction="${t.id}" title="Delete Transaction">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -150,16 +149,15 @@ function renderTransactions() {
     });
   });
 
-  
   if (paginationContainer) {
     if (totalPages <= 1) {
       paginationContainer.innerHTML = "";
-      paginationContainer.parentElement.classList.add("hidden"); 
+      paginationContainer.parentElement.classList.add("hidden");
     } else {
       paginationContainer.parentElement.classList.remove("hidden");
 
       let pagesHtml = "";
-      
+
       for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
           pagesHtml += `<button data-page="${i}" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm ${i === page ? "bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] font-semibold" : "bg-white border border-slate-200 hover:bg-slate-50"}">${i}</button>`;
@@ -236,8 +234,8 @@ function renderRecurringBills(transactions = []) {
       return `
         <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50">
           <div>
-            <p class="font-semibold text-slate-800">${t.description}</p>
-            <p class="text-xs text-slate-500">${t.recurrence || "Recurring"} • Next due ${due}</p>
+            <p class="font-semibold text-slate-800">${escapeHtml(t.description)}</p>
+            <p class="text-xs text-slate-500">${escapeHtml(t.recurrence || "Recurring")} • Next due ${due}</p>
           </div>
           <span class="font-bold text-slate-900">$${Number(t.amount).toFixed(2)}</span>
         </div>
@@ -286,23 +284,23 @@ export function initTransactionForm() {
     const description = formData.get("description");
     const type = formData.get("type");
     const category = formData.get("category");
-    
+
     if (!validateAmount(amount, 0, 999999999)) {
       throw new Error("Amount must be between 0 and 999,999,999");
     }
-    
+
     if (!validateString(description, 1, 500)) {
       throw new Error("Description must be 1-500 characters");
     }
-    
+
     if (!type || !["income", "expense"].includes(type)) {
       throw new Error("Please select a transaction type");
     }
-    
+
     const data = {
       amount: parseFloat(amount),
       description: description.trim(),
-      type: type,
+      type,
       category: category || "Others",
       isRecurring: formData.get("isRecurring") === "on",
       recurrence: formData.get("recurrence"),

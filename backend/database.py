@@ -1,46 +1,48 @@
+import logging
 import sqlite3
 import os
-from typing import Any, Optional
+from contextlib import contextmanager
+from typing import Any, Iterator, Optional
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "users.db")
+DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, "users.db")
 
 
-def get_db() -> sqlite3.Connection:
+@contextmanager
+def get_db() -> Iterator[sqlite3.Connection]:
+    conn = sqlite3.connect(DB_PATH, timeout=10.0)
+    conn.row_factory = sqlite3.Row
     try:
-        conn = sqlite3.connect(DB_PATH, timeout=10.0)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.Error as e:
-        print(f"Database connection error: {e}")
-        raise
+        yield conn
+    finally:
+        conn.close()
 
 
 def query_db(query: str, args: tuple = (), one: bool = False) -> Optional[Any]:
     try:
         with get_db() as conn:
-            cur = conn.execute(query, args)
-            rv = cur.fetchall()
-        if one:
-            return rv[0] if rv else None
-        return rv
-    except sqlite3.Error as e:
-        print(f"Database query error: {e}")
+            rv = conn.execute(query, args).fetchall()
+        return (rv[0] if rv else None) if one else rv
+    except sqlite3.Error:
+        logger.exception("Database query failed: %s", query)
         return None if one else []
 
 
 def execute_db(query: str, args: tuple = ()) -> int:
-    try:
-        with get_db() as conn:
+    with get_db() as conn:
+        try:
             cur = conn.execute(query, args)
             conn.commit()
-            return cur.lastrowid if cur.lastrowid else 0
-    except sqlite3.IntegrityError as e:
-        print(f"Database integrity error: {e}")
-        raise
-    except sqlite3.Error as e:
-        print(f"Database execution error: {e}")
-        return 0
+            return cur.lastrowid or 0
+        except sqlite3.IntegrityError:
+            raise
+        except sqlite3.Error:
+            logger.exception("Database execution failed: %s", query)
+            return 0
 
 
 def init_db():
@@ -98,6 +100,6 @@ def init_db():
     with get_db() as conn:
         for create_sql in schema.values():
             conn.execute(create_sql)
-        
+
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_families_invite_code ON families(invite_code)")
         conn.commit()

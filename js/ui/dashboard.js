@@ -5,6 +5,7 @@ import {
   apiCall,
   setupForm,
   loadComponent,
+  showToast,
 } from "../core.js";
 import { loadFamilyMembers, loadRoles } from "./family.js";
 import {
@@ -120,13 +121,12 @@ async function loadActivityHistory() {
 function initSidebarNavigation() {
   const navItems = Array.from(document.querySelectorAll("[data-nav]"));
 
-  
   navItems.forEach((item) => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
       const key = item.getAttribute("data-nav");
       setActive(key);
-      window.scrollTo(0, 0); 
+      window.scrollTo(0, 0);
     });
   });
 
@@ -143,7 +143,6 @@ function initSidebarNavigation() {
     "comp-analytics",
   ];
 
-  
   const viewConfig = {
     overview: {
       show: [
@@ -183,13 +182,11 @@ function initSidebarNavigation() {
     },
   };
 
-  
   const hash = window.location.hash.slice(1);
   if (viewConfig[hash]) setActive(hash);
   else setActive("overview");
 
   function setActive(key) {
-    
     navItems.forEach((item) => {
       item.classList.remove("nav-active");
       item.classList.add("nav-item");
@@ -199,12 +196,10 @@ function initSidebarNavigation() {
 
     const config = viewConfig[key] || viewConfig["overview"];
 
-    
     allWrappers.forEach((id) =>
       document.getElementById(id)?.classList.add("hidden"),
     );
 
-    
     const gridContainer = document.getElementById("dashboard-grid-container");
     if (gridContainer) {
       if (config.gridMode === "overview") {
@@ -219,18 +214,16 @@ function initSidebarNavigation() {
       }
     }
 
-    
     config.show.forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
         el.classList.remove("hidden");
-        
+
         const inner = el.querySelector("[data-section]");
         if (inner) inner.classList.remove("hidden");
       }
     });
 
-    
     const transEl = document.getElementById("comp-transactions");
     if (transEl) {
       if (key === "overview") {
@@ -254,9 +247,8 @@ function initSidebarNavigation() {
         });
       }
     }
-    
-    
-    window.scrollTo(0,0);
+
+    window.scrollTo(0, 0);
   }
 
   window.navigateDashboardSection = setActive;
@@ -363,7 +355,7 @@ function initSettingsForms() {
     await refreshUserContext();
     updateUserHeader(state.currentUser);
     populateSettingsForms();
-    alert("Profile updated");
+    showToast("Profile updated", "success");
   });
 
   setupForm("passwordSettingsForm", async (formData, form) => {
@@ -374,20 +366,17 @@ function initSettingsForms() {
       newPassword: formData.get("newPassword"),
     });
     form.reset();
-    alert("Password updated");
+    showToast("Password updated", "success");
   });
 
   setupForm("familySettingsForm", async (formData) => {
     if (state.currentUser?.role !== "admin")
       throw new Error("Only admins can update family settings");
-    await apiCall("/api/family", "PATCH", {
-      name: formData.get("familyName"),
-      color: "blue",
-    });
+    await apiCall("/api/family", "PATCH", { name: formData.get("familyName") });
     await refreshUserContext();
     populateSettingsForms();
     loadFamilyMembers();
-    alert("Family updated");
+    showToast("Family updated", "success");
   });
 }
 

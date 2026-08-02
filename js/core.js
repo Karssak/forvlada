@@ -9,7 +9,6 @@ export const state = {
   spendingChartInstance: null,
   roleChartInstance: null,
   incomeChartInstance: null,
-  categoriesCache: [],
 };
 
 export const CATEGORY_COLORS = [
@@ -28,6 +27,12 @@ export const SOCKET_URL =
   window.location.port === "5173" || window.location.port === "4173"
     ? "http://localhost:5000"
     : window.location.origin;
+
+const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+export function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
+}
 
 export function navigate(path) {
   if (window.location.pathname === path) return;
@@ -103,7 +108,6 @@ export function validateAmount(amount, min = 0, max = 999999999) {
   return true;
 }
 
-
 export function showToast(message, type = "error") {
   let container = document.getElementById("toast-container");
   if (!container) {
@@ -120,11 +124,11 @@ export function showToast(message, type = "error") {
       : type === "error"
       ? " bg-red-50 text-red-800 border-red-100"
       : " bg-blue-50 text-blue-700 border-blue-100");
-  
+
   const icon = type === "success" ? "check-circle" : type === "error" ? "alert-circle" : "info";
-  
+
   toast.innerHTML = `<i data-lucide="${icon}" class="w-6 h-6 flex-shrink-0"></i>
-    <p class="mr-3 leading-tight">${message}</p>
+    <p class="mr-3 leading-tight">${escapeHtml(message)}</p>
     <button class="ml-auto text-current opacity-60 hover:opacity-100 transition-opacity px-2 py-1">
       <i data-lucide="x" class="w-5 h-5"></i>
     </button>`;

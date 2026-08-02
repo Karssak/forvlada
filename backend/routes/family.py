@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, jsonify, request, session
 from werkzeug.security import check_password_hash
-from backend.database import query_db, execute_db, get_db
-from backend.utils import login_required, get_user_family_id, generate_invite_code
-from backend.socket_events import emit_family_event, emit_activity
+
+from backend.database import execute_db, get_db, query_db
 from backend.extensions import ACTIVITY_BUFFER
+from backend.socket_events import emit_activity, emit_family_event
+from backend.utils import generate_invite_code, get_user_family_id, login_required
 
 family_bp = Blueprint("family", __name__)
 
@@ -11,23 +12,25 @@ family_bp = Blueprint("family", __name__)
 @family_bp.route("/api/families", methods=["GET", "POST"])
 @login_required
 def handle_families():
-    
     if request.method == "POST":
         data = request.json or {}
         name = data.get("name")
         if not name:
             return jsonify({"error": "Missing fields"}), 400
-        
+
         name = str(name).strip()
         if not name or len(name) > 200:
             return jsonify({"error": "Family name must be 1-200 characters"}), 400
 
         invite_code = generate_invite_code()
-        
+
         with get_db() as conn:
-            family_id = execute_db("INSERT INTO families (name, created_by, invite_code) VALUES (?, ?, ?)", (name, session["user_id"], invite_code))
+            family_id = execute_db(
+                "INSERT INTO families (name, created_by, invite_code) VALUES (?, ?, ?)",
+                (name, session["user_id"], invite_code),
+            )
             conn.execute("UPDATE users SET family_id = ?, role = 'admin' WHERE id = ?", (family_id, session["user_id"]))
-            
+
             default_categories = [
                 ("Food", "expense", "#FF5722"),
                 ("Transport", "expense", "#03A9F4"),
@@ -37,12 +40,14 @@ def handle_families():
                 ("Health", "expense", "#F44336"),
                 ("Others", "expense", "#607D8B"),
                 ("Salary", "income", "#4CAF50"),
-                ("Investment", "income", "#009688")
+                ("Investment", "income", "#009688"),
             ]
-            
-            for name, cat_type, color in default_categories:
-                 conn.execute("INSERT INTO categories (family_id, name, type, color, is_default) VALUES (?, ?, ?, ?, 1)", 
-                              (family_id, name, cat_type, color))
+
+            for cat_name, cat_type, color in default_categories:
+                conn.execute(
+                    "INSERT INTO categories (family_id, name, type, color, is_default) VALUES (?, ?, ?, ?, 1)",
+                    (family_id, cat_name, cat_type, color),
+                )
 
             conn.commit()
 
@@ -68,13 +73,13 @@ def update_family():
     name = data.get("name")
     if not name:
         return jsonify({"error": "Missing fields"}), 400
-    
+
     name = str(name).strip()
     if not name or len(name) > 200:
         return jsonify({"error": "Family name must be 1-200 characters"}), 400
 
     execute_db("UPDATE families SET name = ? WHERE id = ?", (name, family_id))
-    
+
     emit_family_event(family_id, "update_family")
     emit_activity(family_id, "Family updated", f"Family name changed to {name}", category="family")
     return jsonify({"message": "Family updated"}), 200
@@ -87,7 +92,7 @@ def join_family():
     code = data.get("code") or data.get("inviteCode")
     if not code:
         return jsonify({"error": "Missing invite code"}), 400
-    
+
     code = str(code).strip().upper()
     if len(code) != 6 or not code.isalnum():
         return jsonify({"error": "Invalid invite code format"}), 400
@@ -100,12 +105,12 @@ def join_family():
         conn.commit()
 
     emit_family_event(fam["id"], "update_members")
-    
+
     user_info = query_db("SELECT first_name, last_name, role FROM users WHERE id = ?", (session["user_id"],), one=True)
     user_name = f"{user_info['first_name'] or ''} {user_info['last_name'] or ''}".strip() if user_info else "Member"
     user_role = user_info["role"] if user_info else ""
-    
-    emit_activity(fam["id"], "Member joined", f"Joined the family", category="members", user_name=user_name, user_role=user_role)
+
+    emit_activity(fam["id"], "Member joined", "Joined the family", category="members", user_name=user_name, user_role=user_role)
     return jsonify({"message": "Joined family"}), 200
 
 
@@ -137,7 +142,6 @@ def get_family_members():
 @family_bp.route("/api/activity", methods=["GET"])
 @login_required
 def get_activity_history():
-    
     family_id = get_user_family_id()
     if not family_id:
         return jsonify({"error": "No family found"}), 404
@@ -224,13 +228,17 @@ def delete_family_route():
     data = request.json or {}
     password = data.get("password")
     if not password:
-         return jsonify({"error": "Password required"}), 400
-    
+        return jsonify({"error": "Password required"}), 400
+
     if not check_password_hash(requester["password"], password):
-         return jsonify({"error": "Invalid password"}), 403
+        return jsonify({"error": "Invalid password"}), 403
 
     with get_db() as conn:
         conn.execute("UPDATE users SET family_id = NULL, role = 'child' WHERE family_id = ?", (family_id,))
+        conn.execute("DELETE FROM transactions WHERE family_id = ?", (family_id,))
+        conn.execute("DELETE FROM budgets WHERE family_id = ?", (family_id,))
+        conn.execute("DELETE FROM goals WHERE family_id = ?", (family_id,))
+        conn.execute("DELETE FROM categories WHERE family_id = ?", (family_id,))
         conn.execute("DELETE FROM families WHERE id = ?", (family_id,))
         conn.commit()
 

@@ -1,11 +1,14 @@
 import os
-from flask import Blueprint, send_from_directory, current_app
+
+from flask import Blueprint, current_app, send_from_directory
 
 common_bp = Blueprint("common", __name__)
+
 
 @common_bp.route("/")
 def index():
     return send_from_directory(current_app.static_folder, "index.html")
+
 
 @common_bp.route("/<path:path>")
 def serve_static(path):

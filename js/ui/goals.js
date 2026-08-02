@@ -1,14 +1,14 @@
-import { apiCall, setupForm, validateAmount, validateString, state } from "../core.js";
+import { apiCall, setupForm, validateAmount, validateString, state, escapeHtml } from "../core.js";
 
 export async function loadGoals() {
   try {
     const addBtn = document.getElementById("addGoalBtn");
-    const isChild = state.currentUser?.role === 'child';
+    const isChild = state.currentUser?.role === "child";
     if (addBtn) {
       if (isChild) {
-        addBtn.classList.add('hidden');
+        addBtn.classList.add("hidden");
       } else {
-        addBtn.classList.remove('hidden');
+        addBtn.classList.remove("hidden");
       }
     }
 
@@ -28,7 +28,7 @@ export async function loadGoals() {
           : 0;
         return `
           <div class="theme-surface-card p-4 rounded-2xl flex flex-col h-full bg-white relative group">
-            <div class="absolute top-[18p x] right-2 flex flex-col items-end gap-1">
+            <div class="absolute top-[18px] right-2 flex flex-col items-end gap-1">
                  <button class="p-1 text-slate-300 hover:text-red-500 transition-colors" data-delete-goal="${g.id}" title="Delete Goal">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
@@ -37,7 +37,7 @@ export async function loadGoals() {
               <div class="flex items-center gap-3 min-w-0">
                 <i data-lucide="flag" class="w-5 h-5 text-indigo-500 flex-shrink-0"></i>
                 <div class="min-w-0">
-                  <p class="font-bold text-slate-900 truncate">${g.name}</p>
+                  <p class="font-bold text-slate-900 truncate">${escapeHtml(g.name)}</p>
                   <p class="text-xs text-slate-500 break-words">Target: $${Number(g.target_amount).toFixed(2)}</p>
                 </div>
               </div>
@@ -57,8 +57,8 @@ export async function loadGoals() {
               </div>
             </div>
             <div class="mt-3 flex gap-2">
-              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 ${isChild ? 'hidden' : ''}" data-goal-adjust="add" data-goal-id="${g.id}">Add</button>
-              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 ${isChild ? 'hidden' : ''}" data-goal-adjust="subtract" data-goal-id="${g.id}">Withdraw</button>
+              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 ${isChild ? "hidden" : ""}" data-goal-adjust="add" data-goal-id="${g.id}">Add</button>
+              <button class="flex-1 px-3 py-2 text-sm rounded-lg bg-slate-50 border border-slate-200 ${isChild ? "hidden" : ""}" data-goal-adjust="subtract" data-goal-id="${g.id}">Withdraw</button>
             </div>
           </div>
         `;
@@ -80,7 +80,7 @@ export async function loadGoals() {
       });
     });
     if (typeof lucide !== "undefined") lucide.createIcons();
-  } catch { }
+  } catch {}
 }
 
 function openGoalAdjustModal(goalId, action = "add") {
@@ -172,7 +172,7 @@ export function initGoalAdjustForm() {
 
     await apiCall(`/api/goals/${goalId}/adjust`, "POST", {
       amount: parseFloat(amount),
-      action
+      action,
     });
     form.reset();
     document.getElementById("adjustGoalModal")?.classList.add("hidden");

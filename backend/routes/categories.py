@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, jsonify, request, session
+
 from backend.database import execute_db, query_db
-from backend.utils import login_required, get_user_family_id
-from backend.socket_events import emit_family_event, emit_activity
+from backend.socket_events import emit_activity, emit_family_event
+from backend.utils import get_user_family_id, login_required
 
 categories_bp = Blueprint("categories", __name__)
 
@@ -16,13 +17,13 @@ def handle_categories():
     if request.method == "POST":
         user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
         if user and user["role"] == "child":
-             return jsonify({"error": "Children cannot create categories"}), 403
+            return jsonify({"error": "Children cannot create categories"}), 403
 
         data = request.json or {}
         name = data.get("name")
         type_val = data.get("type", "expense")
         color = data.get("color", "#CCCCCC")
-        
+
         if not name:
             return jsonify({"error": "Category name is required"}), 400
 
@@ -36,7 +37,7 @@ def handle_categories():
 
         execute_db(
             "INSERT INTO categories (family_id, name, type, color, is_default) VALUES (?, ?, ?, ?, 0)",
-            (family_id, name, type_val, color)
+            (family_id, name, type_val, color),
         )
         return jsonify({"success": True}), 201
 
@@ -57,7 +58,7 @@ def modify_category(cat_id):
 
     user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
     if user and user["role"] == "child":
-         return jsonify({"error": "Children cannot modify categories"}), 403
+        return jsonify({"error": "Children cannot modify categories"}), 403
 
     if request.method == "PUT":
         data = request.json or {}
@@ -80,8 +81,10 @@ def modify_category(cat_id):
         if updated_type and updated_type != cat["type"]:
             execute_db("UPDATE transactions SET type = ? WHERE family_id = ? AND category = ?", (updated_type, family_id, cat["name"]))
 
-        execute_db("UPDATE categories SET name = ?, color = ?, type = ? WHERE id = ?", 
-                   (updated_name, updated_color, updated_type, cat_id))
+        execute_db(
+            "UPDATE categories SET name = ?, color = ?, type = ? WHERE id = ?",
+            (updated_name, updated_color, updated_type, cat_id),
+        )
 
         emit_family_event(family_id, "update_categories")
         emit_family_event(family_id, "update_transactions")
@@ -93,6 +96,6 @@ def modify_category(cat_id):
     if request.method == "DELETE":
         execute_db("UPDATE transactions SET category = 'Others' WHERE family_id = ? AND category = ?", (family_id, cat["name"]))
         execute_db("UPDATE budgets SET category = 'Others' WHERE family_id = ? AND category = ?", (family_id, cat["name"]))
-        
+
         execute_db("DELETE FROM categories WHERE id = ?", (cat_id,))
         return jsonify({"success": True})

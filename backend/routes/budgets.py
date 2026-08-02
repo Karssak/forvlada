@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, session
-from backend.database import get_db, query_db, execute_db
-from backend.utils import login_required, get_user_family_id
+from flask import Blueprint, jsonify, request, session
+
+from backend.database import execute_db, get_db, query_db
 from backend.socket_events import emit_activity, emit_family_event
+from backend.utils import get_user_family_id, login_required
 
 budgets_bp = Blueprint("budgets", __name__)
 
@@ -16,7 +17,7 @@ def handle_budgets():
     if request.method == "POST":
         user = query_db("SELECT role FROM users WHERE id = ?", (session["user_id"],), one=True)
         if user and user["role"] == "child":
-             return jsonify({"error": "Children cannot create budgets"}), 403
+            return jsonify({"error": "Children cannot create budgets"}), 403
 
         data = request.json or {}
         category = data.get("category")
@@ -25,18 +26,18 @@ def handle_budgets():
 
         if category is None or amount is None:
             return jsonify({"error": "Missing fields"}), 400
-        
+
         category = str(category).strip()
         if not category or len(category) > 100:
             return jsonify({"error": "Category must be 1-100 characters"}), 400
-        
+
         try:
             amount = float(amount)
             if amount <= 0 or amount > 999999999:
                 return jsonify({"error": "Amount must be between 0 and 999,999,999"}), 400
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid amount format"}), 400
-        
+
         if period not in ["daily", "weekly", "monthly", "yearly"]:
             return jsonify({"error": "Period must be daily, weekly, monthly, or yearly"}), 400
 
@@ -113,12 +114,12 @@ def delete_budget(budget_id):
         return jsonify({"error": "Budget not found"}), 404
 
     execute_db("DELETE FROM budgets WHERE id = ?", (budget_id,))
-    
+
     emit_family_event(family_id, "update_budgets")
     emit_activity(
         family_id,
         "Budget deleted",
         f"Budget for {budget['category']} removed",
-        category="budgets"
+        category="budgets",
     )
     return jsonify({"message": "Budget deleted"}), 200

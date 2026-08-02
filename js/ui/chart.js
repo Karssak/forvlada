@@ -1,4 +1,4 @@
-import { CATEGORY_COLORS, state } from "../core.js";
+import { CATEGORY_COLORS, state, escapeHtml } from "../core.js";
 
 export function renderSpendingChart(transactions = []) {
   const ctx = document.getElementById("spendingChart");
@@ -42,11 +42,11 @@ export function renderSpendingChart(transactions = []) {
     getComputedStyle(document.documentElement)
       .getPropertyValue("--theme-primary")
       .trim() || CATEGORY_COLORS[0];
-  
+
   const colors = entries.map(([name], idx) => {
-    const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    const cat = state.categories && state.categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
     if (cat) return cat.color;
-    
+
     return idx === 0 ? themePrimary : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
   });
 
@@ -100,11 +100,11 @@ export function renderSpendingChart(transactions = []) {
   legend.innerHTML = entries
     .map(([category, value], idx) => {
       const percent = ((value / totalAmount) * 100).toFixed(1);
-      
+
       let color;
-      const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === category.toLowerCase());
+      const cat = state.categories && state.categories.find((c) => c.name.toLowerCase() === category.toLowerCase());
       if (cat) {
-          color = cat.color;
+        color = cat.color;
       } else {
         const themePrimary = getComputedStyle(document.documentElement).getPropertyValue("--theme-primary").trim() || CATEGORY_COLORS[0];
         color = idx === 0 ? themePrimary : CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
@@ -115,7 +115,7 @@ export function renderSpendingChart(transactions = []) {
         <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
           <div class="flex items-center gap-2">
             <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
-                  <span class="font-medium text-slate-600">${displayLabel}</span>
+            <span class="font-medium text-slate-600">${escapeHtml(displayLabel)}</span>
           </div>
           <div class="text-right">
             <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
@@ -350,29 +350,31 @@ export function renderChildSpendingStats(transactions = []) {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  const childExpenses = transactions.filter(t => {
-      const d = new Date(t.date);
-      const role = (t.role || "").toLowerCase();
-      return t.type !== 'income' && 
-             role === 'child' &&
-             d.getMonth() === currentMonth && 
-             d.getFullYear() === currentYear;
+  const childExpenses = transactions.filter((t) => {
+    const d = new Date(t.date);
+    const role = (t.role || "").toLowerCase();
+    return (
+      t.type !== "income" &&
+      role === "child" &&
+      d.getMonth() === currentMonth &&
+      d.getFullYear() === currentYear
+    );
   });
 
   if (!childExpenses.length) {
-      list.innerHTML = '<p class="text-center text-slate-400 py-6">No spending for children this month.</p>';
-      return;
+    list.innerHTML = '<p class="text-center text-slate-400 py-6">No spending for children this month.</p>';
+    return;
   }
 
   const byChild = childExpenses.reduce((acc, t) => {
-      const name = t.first_name || 'Unknown Child';
-      acc[name] = (acc[name] || 0) + Math.abs(Number(t.amount) || 0);
-      return acc;
+    const name = t.first_name || "Unknown Child";
+    acc[name] = (acc[name] || 0) + Math.abs(Number(t.amount) || 0);
+    return acc;
   }, {});
 
-  const entries = Object.entries(byChild).sort((a,b) => b[1] - a[1]);
-  
-  const monthName = now.toLocaleString('default', { month: 'long' });
+  const entries = Object.entries(byChild).sort((a, b) => b[1] - a[1]);
+
+  const monthName = now.toLocaleString("default", { month: "long" });
 
   list.innerHTML = `
     <div class="text-xs text-slate-400 mb-2 uppercase tracking-wide font-bold">Month: ${monthName} ${currentYear}</div>
@@ -380,13 +382,13 @@ export function renderChildSpendingStats(transactions = []) {
       <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">
-                ${name.charAt(0).toUpperCase()}
+                ${escapeHtml(name.charAt(0).toUpperCase())}
             </div>
-            <span class="font-medium text-slate-700">${name}</span>
+            <span class="font-medium text-slate-700">${escapeHtml(name)}</span>
         </div>
-        <span class="font-bold text-slate-900">$${amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+        <span class="font-bold text-slate-900">$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
       </div>
-  `).join('')}`;
+  `).join("")}`;
 }
 
 export function renderPersonSpendingChart(transactions = []) {
@@ -441,7 +443,7 @@ export function renderPersonSpendingChart(transactions = []) {
       <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
-          <span class="font-medium text-slate-600">${name}</span>
+          <span class="font-medium text-slate-600">${escapeHtml(name)}</span>
         </div>
         <div class="text-right">
           <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
@@ -503,7 +505,7 @@ export function renderPersonIncomeChart(transactions = []) {
       <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
-          <span class="font-medium text-slate-600">${name}</span>
+          <span class="font-medium text-slate-600">${escapeHtml(name)}</span>
         </div>
         <div class="text-right">
           <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
@@ -553,7 +555,7 @@ export function renderIncomeChart(transactions = []) {
 
   const incomeColors = ["#10b981", "#059669", "#34d399", "#6ee7b7", "#a7f3d0"];
   const colors = entries.map(([name], idx) => {
-    const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    const cat = state.categories && state.categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
     return cat ? cat.color : incomeColors[idx % incomeColors.length];
   });
 
@@ -603,9 +605,9 @@ export function renderIncomeChart(transactions = []) {
   legend.innerHTML = entries
     .map(([category, value], idx) => {
       const percent = ((value / totalAmount) * 100).toFixed(1);
-      
+
       let color;
-      const cat = state.categories && state.categories.find(c => c.name.toLowerCase() === category.toLowerCase());
+      const cat = state.categories && state.categories.find((c) => c.name.toLowerCase() === category.toLowerCase());
       if (cat) color = cat.color;
       else color = incomeColors[idx % incomeColors.length];
 
@@ -614,7 +616,7 @@ export function renderIncomeChart(transactions = []) {
         <div class="flex items-center justify-between p-2 border-b border-slate-50 last:border-0">
           <div class="flex items-center gap-2">
             <div class="w-2 h-2 rounded-full" style="background-color: ${color}"></div>
-            <span class="font-medium text-slate-600">${displayLabel}</span>
+            <span class="font-medium text-slate-600">${escapeHtml(displayLabel)}</span>
           </div>
           <div class="text-right">
             <span class="font-bold text-slate-900">$${value.toLocaleString()}</span>
@@ -626,8 +628,7 @@ export function renderIncomeChart(transactions = []) {
     .join("");
 }
 
-window.toggleChartSource = function(type, source) {
-  
+window.toggleChartSource = function (type, source) {
   const groupContainer = document.getElementById(`${type}GroupContainer`);
   const individualContainer = document.getElementById(`${type}IndividualContainer`);
   const btnGroup = document.getElementById(`${type}ToggleGroup`);
@@ -635,30 +636,29 @@ window.toggleChartSource = function(type, source) {
 
   if (!groupContainer || !individualContainer || !btnGroup || !btnIndividual) return;
 
-  if (source === 'group') {
-    groupContainer.classList.remove('hidden');
-    individualContainer.classList.add('hidden');
-    
-    btnGroup.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
-    btnGroup.classList.remove('text-slate-500', 'hover:text-slate-700');
-    
-    btnIndividual.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
-    btnIndividual.classList.add('text-slate-500', 'hover:text-slate-700');
+  if (source === "group") {
+    groupContainer.classList.remove("hidden");
+    individualContainer.classList.add("hidden");
 
-    if (type === 'income' && state.roleIncomeChartInstance) state.roleIncomeChartInstance.resize();
-    if (type === 'spending' && state.roleChartInstance) state.roleChartInstance.resize();
+    btnGroup.classList.add("bg-white", "shadow-sm", "text-slate-900");
+    btnGroup.classList.remove("text-slate-500", "hover:text-slate-700");
 
+    btnIndividual.classList.remove("bg-white", "shadow-sm", "text-slate-900");
+    btnIndividual.classList.add("text-slate-500", "hover:text-slate-700");
+
+    if (type === "income" && state.roleIncomeChartInstance) state.roleIncomeChartInstance.resize();
+    if (type === "spending" && state.roleChartInstance) state.roleChartInstance.resize();
   } else {
-    groupContainer.classList.add('hidden');
-    individualContainer.classList.remove('hidden');
-    
-    btnGroup.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
-    btnGroup.classList.add('text-slate-500', 'hover:text-slate-700');
-    
-    btnIndividual.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
-    btnIndividual.classList.remove('text-slate-500', 'hover:text-slate-700');
+    groupContainer.classList.add("hidden");
+    individualContainer.classList.remove("hidden");
 
-    if (type === 'income' && state.personIncomeChartInstance) state.personIncomeChartInstance.resize();
-    if (type === 'spending' && state.personSpendingChartInstance) state.personSpendingChartInstance.resize();
+    btnGroup.classList.remove("bg-white", "shadow-sm", "text-slate-900");
+    btnGroup.classList.add("text-slate-500", "hover:text-slate-700");
+
+    btnIndividual.classList.add("bg-white", "shadow-sm", "text-slate-900");
+    btnIndividual.classList.remove("text-slate-500", "hover:text-slate-700");
+
+    if (type === "income" && state.personIncomeChartInstance) state.personIncomeChartInstance.resize();
+    if (type === "spending" && state.personSpendingChartInstance) state.personSpendingChartInstance.resize();
   }
 };

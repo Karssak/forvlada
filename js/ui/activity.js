@@ -1,4 +1,4 @@
-import { state } from "../core.js";
+import { state, escapeHtml } from "../core.js";
 
 const PAGE_SIZE = 5;
 
@@ -61,7 +61,7 @@ export function renderLiveEvents() {
         hour: "2-digit",
         minute: "2-digit",
       });
-      
+
       let userInfo = "";
       if (evt.user_name) {
         userInfo = evt.user_name;
@@ -71,16 +71,16 @@ export function renderLiveEvents() {
         }
         userInfo = `${userInfo}: `;
       }
-      
+
       const detail = evt.detail
-        ? `<p class="text-xs text-slate-500">${userInfo}${evt.detail}</p>`
+        ? `<p class="text-xs text-slate-500">${escapeHtml(userInfo)}${escapeHtml(evt.detail)}</p>`
         : "";
       return `
         <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex items-start justify-between gap-3">
           <div class="flex items-start gap-3">
             <span class="px-2 py-1 rounded-full text-[11px] font-semibold ${badge.bg} ${badge.text}">${badge.label}</span>
             <div>
-              <p class="font-semibold text-slate-900">${evt.title || "Activity"}</p>
+              <p class="font-semibold text-slate-900">${escapeHtml(evt.title || "Activity")}</p>
               ${detail}
             </div>
           </div>
@@ -97,13 +97,13 @@ export function renderLiveEvents() {
       pagination.parentElement.classList.add("hidden");
     } else {
       pagination.parentElement.classList.remove("hidden");
-      
+
       let pagesHtml = "";
       for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-           pagesHtml += `<button data-page="${i}" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm ${i === page ? "bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] font-semibold" : "bg-white border border-slate-200 hover:bg-slate-50"}">${i}</button>`;
+          pagesHtml += `<button data-page="${i}" class="w-8 h-8 rounded-lg flex items-center justify-center text-sm ${i === page ? "bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] font-semibold" : "bg-white border border-slate-200 hover:bg-slate-50"}">${i}</button>`;
         } else if (i === page - 2 || i === page + 2) {
-           pagesHtml += `<span class="w-8 h-8 flex items-center justify-center text-slate-400">...</span>`;
+          pagesHtml += `<span class="w-8 h-8 flex items-center justify-center text-slate-400">...</span>`;
         }
       }
 
@@ -119,11 +119,11 @@ export function renderLiveEvents() {
         </div>
       `;
 
-      pagination.querySelectorAll("button[data-page]").forEach((btn) => 
+      pagination.querySelectorAll("button[data-page]").forEach((btn) =>
         btn.addEventListener("click", () => {
           state.activityPage = Number(btn.getAttribute("data-page")) || 1;
           renderLiveEvents();
-        })
+        }),
       );
       const prev = document.getElementById("livePrev");
       const next = document.getElementById("liveNext");
@@ -140,8 +140,8 @@ export function renderLiveEvents() {
           );
           renderLiveEvents();
         };
-      
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
   }
 }

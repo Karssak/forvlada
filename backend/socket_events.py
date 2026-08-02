@@ -1,8 +1,10 @@
+import time
+
 from flask import request, session
 from flask_socketio import join_room
-import time
-from .extensions import socketio, ACTIVITY_BUFFER
+
 from .database import query_db
+from .extensions import ACTIVITY_BUFFER, socketio
 
 
 def get_family_room(family_id):
@@ -48,15 +50,17 @@ def handle_connect():
 
 @socketio.on("join_family_room")
 def handle_join_family_room(data):
-    family_id = data.get("family_id")
-    if family_id:
-        join_room(get_family_room(family_id))
-    try:
-        fid = int(family_id)
-    except (TypeError, ValueError):
-        fid = family_id
+    if "user_id" not in session:
+        return
+
+    user = query_db("SELECT family_id FROM users WHERE id = ?", (session["user_id"],), one=True)
+    if not user or not user["family_id"]:
+        return
+
+    family_id = user["family_id"]
+    join_room(get_family_room(family_id))
     socketio.emit(
         "activity_sync",
-        {"family_id": fid, "events": ACTIVITY_BUFFER.get(fid, [])},
+        {"family_id": family_id, "events": ACTIVITY_BUFFER.get(family_id, [])},
         room=request.sid,
     )

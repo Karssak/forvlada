@@ -1,4 +1,4 @@
-import { navigate, apiCall, loadComponent } from "./core.js";
+import { navigate, apiCall, loadComponent, escapeHtml } from "./core.js";
 import { initDashboardPage } from "./ui/dashboard.js";
 import { initLoginForm, initRegisterForm, initFamilyForms } from "./ui/auth.js";
 
@@ -44,9 +44,9 @@ async function updateNav() {
       authButtons.innerHTML = `
            <div class="flex items-center gap-3 mr-4 pl-4 border-l border-slate-200">
               <div class="w-8 h-8 rounded-full bg-[var(--theme-primary-soft)] text-[var(--theme-primary-strong)] flex items-center justify-center text-sm font-bold border border-[var(--theme-primary-border)]">
-                ${initials}
+                ${escapeHtml(initials)}
               </div>
-              <span class="text-slate-700 font-medium text-sm hidden sm:block">${name}</span>
+              <span class="text-slate-700 font-medium text-sm hidden sm:block">${escapeHtml(name)}</span>
            </div>
            <a href="/dashboard" class="flex items-center gap-2 text-slate-600 font-medium mr-4 hover:text-[var(--theme-primary)] transition-colors">
              <i data-lucide="layout-dashboard" class="w-5 h-5"></i>

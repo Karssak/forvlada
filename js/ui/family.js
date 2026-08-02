@@ -1,4 +1,4 @@
-import { fetchFamilySnapshot, apiCall, state, showToast } from "../core.js";
+import { fetchFamilySnapshot, apiCall, state, showToast, escapeHtml } from "../core.js";
 
 export async function loadFamilyMembers() {
   try {
@@ -13,13 +13,13 @@ export async function loadFamilyMembers() {
 
     const dangerZone = document.getElementById("familySettingsArea");
     if (dangerZone) {
-      if (state.currentUser?.role === 'admin') {
-        dangerZone.classList.remove('hidden');
+      if (state.currentUser?.role === "admin") {
+        dangerZone.classList.remove("hidden");
         const delBtn = document.getElementById("deleteFamilyBtn");
         if (delBtn) delBtn.onclick = () => openDeleteFamilyModal();
         setupDeleteFamilyHandlers();
       } else {
-        dangerZone.classList.add('hidden');
+        dangerZone.classList.add("hidden");
       }
     }
 
@@ -40,10 +40,10 @@ export async function loadFamilyMembers() {
         return `
           <div class="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700">${(member.first_name || "U").charAt(0)}</div>
+              <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700">${escapeHtml((member.first_name || "U").charAt(0))}</div>
               <div>
-                <p class="font-semibold text-slate-900">${member.first_name || ""} ${member.last_name || ""}</p>
-                <p class="text-xs text-slate-500">${member.email}</p>
+                <p class="font-semibold text-slate-900">${escapeHtml(`${member.first_name || ""} ${member.last_name || ""}`)}</p>
+                <p class="text-xs text-slate-500">${escapeHtml(member.email)}</p>
               </div>
             </div>
             <div class="flex items-center gap-2">
@@ -95,11 +95,11 @@ export async function loadRoles() {
            return `
       <div class="flex items-center justify-between p-3 border border-slate-100 rounded-lg">
         <div>
-          <p class="font-bold text-slate-900">${m.first_name || ""} ${m.last_name || ""}</p>
-          <p class="text-xs text-slate-500">${m.email}</p>
+          <p class="font-bold text-slate-900">${escapeHtml(`${m.first_name || ""} ${m.last_name || ""}`)}</p>
+          <p class="text-xs text-slate-500">${escapeHtml(m.email)}</p>
         </div>
         <div class="relative">
-          <select ${!isAdmin || (isSelf && m.role === 'admin') ? "disabled" : ""} class="appearance-none px-3 py-2 pr-10 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400" data-role-user-id="${m.id}">
+          <select ${!isAdmin || (isSelf && m.role === "admin") ? "disabled" : ""} class="appearance-none px-3 py-2 pr-10 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400" data-role-user-id="${m.id}">
             ${["admin", "parent", "child"].map((r) => `<option value="${r}" ${m.role === r ? "selected" : ""}>${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join("")}
           </select>
           <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
@@ -120,10 +120,10 @@ export async function loadRoles() {
 }
 
 async function assignRole(userId, role) {
-  if (state.currentUser?.role === 'admin' && userId == state.currentUser?.id && role !== 'admin') {
-      showToast("Cannot remove your own admin role", "error");
-      loadRoles();
-      return;
+  if (state.currentUser?.role === "admin" && userId == state.currentUser?.id && role !== "admin") {
+    showToast("Cannot remove your own admin role", "error");
+    loadRoles();
+    return;
   }
   try {
     await apiCall("/api/roles/assign", "POST", { userId, role });
@@ -135,41 +135,33 @@ async function assignRole(userId, role) {
   }
 }
 
-async function deleteFamily() {
-  openDeleteFamilyModal();
-}
-
 function openDeleteFamilyModal() {
-  const modal = document.getElementById('deleteFamilyModal');
+  const modal = document.getElementById("deleteFamilyModal");
   if (!modal) return;
-  modal.classList.remove('hidden');
-  const pwd = document.getElementById('deleteFamilyPasswordInput');
-  if (pwd) pwd.value = '';
+  modal.classList.remove("hidden");
+  const pwd = document.getElementById("deleteFamilyPasswordInput");
+  if (pwd) pwd.value = "";
 }
 
 function setupDeleteFamilyHandlers() {
-  const modal = document.getElementById('deleteFamilyModal');
+  const modal = document.getElementById("deleteFamilyModal");
   if (!modal) return;
-  const confirmBtn = document.getElementById('confirmDeleteFamilyBtn');
-  const closeBtns = modal.querySelectorAll('[onclick]');
-
-  closeBtns.forEach((b) => {
-  });
+  const confirmBtn = document.getElementById("confirmDeleteFamilyBtn");
 
   if (confirmBtn) {
     confirmBtn.onclick = async () => {
-      const pwdInput = document.getElementById('deleteFamilyPasswordInput');
+      const pwdInput = document.getElementById("deleteFamilyPasswordInput");
       const password = pwdInput?.value;
       if (!password) {
         showToast("Please enter your password", "error");
         return;
       }
       try {
-        await apiCall('/api/family_delete', 'DELETE', { password });
+        await apiCall("/api/family_delete", "DELETE", { password });
         showToast("Family deleted. Redirecting...", "success");
-        setTimeout(() => (window.location.href = '/'), 1200);
+        setTimeout(() => (window.location.href = "/"), 1200);
       } catch (err) {
-        showToast(err.message || 'Failed to delete family', 'error');
+        showToast(err.message || "Failed to delete family", "error");
       }
     };
   }
