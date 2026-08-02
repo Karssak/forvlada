@@ -35,11 +35,3 @@ python app.py            # http://localhost:5000
 npm install
 npm run dev               # http://localhost:5173, proxies /api and /socket.io to :5000
 ```
-
-## Project layout
-
-```
-backend/            Flask app: routes, DB access, socket events
-js/, components/    Frontend: router, API/socket client, per-page UI modules, HTML partials
-index.html, style.css, script.js   App shell
-```
